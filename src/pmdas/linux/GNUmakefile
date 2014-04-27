@@ -35,7 +35,7 @@ CFILES		= pmda.c \
 		  proc_slabinfo.c sem_limits.c msg_limits.c shm_limits.c \
 		  proc_uptime.c proc_sys_fs.c proc_vmstat.c \
 		  sysfs_kernel.c linux_table.c numa_meminfo.c \
-		  proc_net_netstat.c
+		  proc_net_netstat.c proc_net_sctp_snmp.c
 
 HFILES		= clusters.h indom.h convert.h \
 		  proc_stat.h proc_meminfo.h proc_loadavg.h \
@@ -46,7 +46,7 @@ HFILES		= clusters.h indom.h convert.h \
 		  proc_slabinfo.h sem_limits.h msg_limits.h shm_limits.h \
 		  proc_uptime.h proc_sys_fs.h proc_vmstat.h \
 		  sysfs_kernel.h linux_table.h numa_meminfo.h \
-		  proc_net_netstat.h
+		  proc_net_netstat.h proc_net_sctp_snmp.h
 
 VERSION_SCRIPT	= exports
 HELPTARGETS	= help.dir help.pag
@@ -113,6 +113,7 @@ pmda.o proc_net_netstat.o:	proc_net_netstat.h
 pmda.o proc_net_rpc.o:	proc_net_rpc.h
 pmda.o proc_net_snmp.o:	proc_net_snmp.h
 pmda.o proc_net_sockstat.o:	proc_net_sockstat.h
+pmda.o proc_net_sctp_snmp.o:	proc_net_sctp_snmp.h
 pmda.o proc_net_tcp.o:	proc_net_tcp.h
 pmda.o proc_partitions.o:	proc_partitions.h
 pmda.o proc_scsi.o:	proc_scsi.h

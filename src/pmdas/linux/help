@@ -998,6 +998,40 @@ Excluding retransmission but including data-in-SYN). This counter is different f
 TcpOutSegs because TcpOutSegs also tracks pure ACKs. TCPOrigDataSent is
 more useful to track the TCP retransmission rate.
 
+@ network.sctp.currestab Currently established associations
+@ network.sctp.activeestabs Active established associations
+@ network.sctp.passiveestabs Passive established associations
+@ network.sctp.aborteds Aborts
+@ network.sctp.shutdowns Shutdowns
+@ network.sctp.outofblues Out of the blue packets
+@ network.sctp.checksumerrors Checksum errors
+@ network.sctp.outctrlchunks Outgoing control chunks
+@ network.sctp.outorderchunks Outgoing ordered chunks
+@ network.sctp.outunorderchunks Outgoing unordered chunks
+@ network.sctp.inctrlchunks Incoming control chunks
+@ network.sctp.inorderchunks Incoming ordered chunks
+@ network.sctp.inunorderchunks Incoming unordered chunks
+@ network.sctp.fragusrmsgs Fragmented user messages
+@ network.sctp.reasmusrmsgs Reassembled user messages
+@ network.sctp.outsctppacks Outgoing packets
+@ network.sctp.insctppacks Incoming packets
+@ network.sctp.t1initexpireds T1 init expired
+@ network.sctp.t1cookieexpireds T1 cookie expired
+@ network.sctp.t2shutdownexpireds T2 shutdown expired
+@ network.sctp.t3rtxexpireds T3 RTX expired
+@ network.sctp.t4rtoexpireds T4 RTO expired
+@ network.sctp.t5shutdownguardexpireds T5 shutdown guard expires
+@ network.sctp.delaysackexpireds Delayed SACKs expired
+@ network.sctp.autocloseexpireds Autoclose expired
+@ network.sctp.t3retransmits T3 retransmits
+@ network.sctp.pmtudretransmits PMTUD retransmits
+@ network.sctp.fastretransmits Fast retransmits
+@ network.sctp.inpktsoftirq Incoming packet softirqs
+@ network.sctp.inpktbacklog Incoming packet backlog
+@ network.sctp.inpktdiscards Incoming packet discards
+@ network.sctp.indatachunkdiscards Incoming data chunk discards
+
+
 @ pmda.uname identity and type of current system
 Identity and type of current system.  The concatenation of the values
 returned from utsname(2), also similar to uname -a.
