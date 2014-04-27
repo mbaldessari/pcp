@@ -74,6 +74,7 @@ enum {
 	PROC_PID_FD,		/* 51 /proc/<pid>/fd -> proc PMDA */
 	CLUSTER_LV,		/* 52 /dev/mapper */
 	CLUSTER_NET_NETSTAT,    /* 53 /proc/net/netstat */
+	CLUSTER_NET_SCTP,       /* 54 /proc/net/sctp/snmp */
 
 
 	NUM_CLUSTERS		/* one more than highest numbered cluster */

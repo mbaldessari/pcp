@@ -409,6 +409,7 @@ network {
     udp
     udplite
     tcpconn
+    sctp
 }
 
 network.interface {
@@ -693,6 +694,41 @@ network.udplite {
 network.icmpmsg {
     intype		60:14:88
     outtype		60:14:89
+}
+
+network.sctp {
+    currestab           60:54:00
+    activeestabs        60:54:01
+    passiveestabs       60:54:02
+    aborteds            60:54:03
+    shutdowns           60:54:04
+    outofblues          60:54:05
+    checksumerrors      60:54:06
+    outctrlchunks       60:54:07
+    outorderchunks      60:54:08
+    outunorderchunks    60:54:09
+    inctrlchunks        60:54:10
+    inorderchunks       60:54:11
+    inunorderchunks     60:54:12
+    fragusrmsgs         60:54:13
+    reasmusrmsgs        60:54:14
+    outsctppacks        60:54:15
+    insctppacks         60:54:16
+    t1initexpireds      60:54:17
+    t1cookieexpireds    60:54:18
+    t2shutdownexpireds  60:54:19
+    t3rtxexpireds       60:54:20
+    t4rtoexpireds       60:54:21
+    t5shutdownguardexpireds 60:54:22
+    delaysackexpireds   60:54:23
+    autocloseexpireds   60:54:24
+    t3retransmits       60:54:25
+    pmtudretransmits    60:54:26
+    fastretransmits     60:54:27
+    inpktsoftirq        60:54:28
+    inpktbacklog        60:54:29
+    inpktdiscards       60:54:30
+    indatachunkdiscards 60:54:31
 }
 
 filesys {

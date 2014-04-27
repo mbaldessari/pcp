@@ -1,0 +1,56 @@
+/*
+ * Copyright (c) 2014 Red Hat.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+enum {
+    _PM_SCTP_SNMP_SCTPCURRESTAB = 0,
+    _PM_SCTP_SNMP_SCTPACTIVEESTABS,
+    _PM_SCTP_SNMP_SCTPPASSIVEESTABS,
+    _PM_SCTP_SNMP_SCTPABORTEDS,
+    _PM_SCTP_SNMP_SCTPSHUTDOWNS,
+    _PM_SCTP_SNMP_SCTPOUTOFBLUES,
+    _PM_SCTP_SNMP_SCTPCHECKSUMERRORS,
+    _PM_SCTP_SNMP_SCTPOUTCTRLCHUNKS,
+    _PM_SCTP_SNMP_SCTPOUTORDERCHUNKS,
+    _PM_SCTP_SNMP_SCTPOUTUNORDERCHUNKS,
+    _PM_SCTP_SNMP_SCTPINCTRLCHUNKS,
+    _PM_SCTP_SNMP_SCTPINORDERCHUNKS,
+    _PM_SCTP_SNMP_SCTPINUNORDERCHUNKS,
+    _PM_SCTP_SNMP_SCTPFRAGUSRMSGS,
+    _PM_SCTP_SNMP_SCTPREASMUSRMSGS,
+    _PM_SCTP_SNMP_SCTPOUTSCTPPACKS,
+    _PM_SCTP_SNMP_SCTPINSCTPPACKS,
+    _PM_SCTP_SNMP_SCTPT1INITEXPIREDS,
+    _PM_SCTP_SNMP_SCTPT1COOKIEEXPIREDS,
+    _PM_SCTP_SNMP_SCTPT2SHUTDOWNEXPIREDS,
+    _PM_SCTP_SNMP_SCTPT3RTXEXPIREDS,
+    _PM_SCTP_SNMP_SCTPT4RTOEXPIREDS,
+    _PM_SCTP_SNMP_SCTPT5SHUTDOWNGUARDEXPIREDS,
+    _PM_SCTP_SNMP_SCTPDELAYSACKEXPIREDS,
+    _PM_SCTP_SNMP_SCTPAUTOCLOSEEXPIREDS,
+    _PM_SCTP_SNMP_SCTPT3RETRANSMITS,
+    _PM_SCTP_SNMP_SCTPPMTUDRETRANSMITS,
+    _PM_SCTP_SNMP_SCTPFASTRETRANSMITS,
+    _PM_SCTP_SNMP_SCTPINPKTSOFTIRQ,
+    _PM_SCTP_SNMP_SCTPINPKTBACKLOG,
+    _PM_SCTP_SNMP_SCTPINPKTDISCARDS,
+    _PM_SCTP_SNMP_SCTPINDATACHUNKDISCARDS,
+    _PM_SCTP_SNMP_NFIELDS /* must be last */
+};
+
+
+typedef struct {
+    __uint64_t	snmp[_PM_SCTP_SNMP_NFIELDS];
+} proc_net_sctp_snmp_t;
+
+extern int refresh_proc_net_sctp_snmp(proc_net_sctp_snmp_t *);
