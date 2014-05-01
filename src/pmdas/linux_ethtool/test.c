@@ -31,24 +31,28 @@ typedef __uint16_t u16;
 typedef __uint8_t u8;
 typedef __int32_t s32;
 
+#define ETHTOOL_GDRVINFO        0x00000003 /* Get driver info. */
+#define ETHTOOL_GSTRINGS        0x0000001b /* get specified string set */
 #define ETHTOOL_GSTATS          0x0000001d /* get NIC-specific statistics */
+#define ETHTOOL_GSSET_INFO      0x00000037 /* Get string set info */
 
-#define ETH_GSTRING_LEN         32                                                
-enum ethtool_stringset {                                                          
-        ETH_SS_TEST             = 0,                                              
-        ETH_SS_STATS,                                                             
-        ETH_SS_PRIV_FLAGS,                                                        
-        ETH_SS_NTUPLE_FILTERS,  /* Do not use, GRXNTUPLE is now deprecated */     
-        ETH_SS_FEATURES,                                                          
-}; 
+
+#define ETH_GSTRING_LEN         32
+enum ethtool_stringset {
+        ETH_SS_TEST             = 0,
+        ETH_SS_STATS,
+        ETH_SS_PRIV_FLAGS,
+        ETH_SS_NTUPLE_FILTERS,  /* Do not use, GRXNTUPLE is now deprecated */
+        ETH_SS_FEATURES,
+};
 
 /* for passing string sets for data tagging */
-struct ethtool_gstrings {                                                         
+struct ethtool_gstrings {
         u32   cmd;            /* ETHTOOL_GSTRINGS */
         u32   string_set;     /* string set id e.c. ETH_SS_TEST, etc*/
         u32   len;            /* number of strings in the string set */
-        u8    data[0];         
-};                                                                                
+        u8    data[0];
+};
 
 struct ethtool_sset_info {
         u32   cmd;            /* ETHTOOL_GSSET_INFO */
@@ -84,14 +88,14 @@ struct ethtool_drvinfo {
         u32   testinfo_len;
         u32   eedump_len;     /* Size of data from ETHTOOL_GEEPROM (bytes) */
         u32   regdump_len;    /* Size of data from ETHTOOL_GREGS (bytes) */
-};                                                                                
+};
 
 /* for dumping NIC-specific statistics */
 struct ethtool_stats {
-        u32   cmd;            /* ETHTOOL_GSTATS */                 
+        u32   cmd;            /* ETHTOOL_GSTATS */
         u32   n_stats;        /* number of u64's being returned */
         u64   data[0];
-};      
+};
 
 /* Context for sub-commands */
 struct cmd_context {
@@ -100,12 +104,64 @@ struct cmd_context {
 	struct ifreq ifr;       /* ifreq suitable for ethtool ioctl */
 	int argc;               /* number of arguments to the sub-command */
 	char **argp;            /* arguments to the sub-command */
-};                                                                           
+};
 
 struct flag_info {
 	const char *name;
 	u32 value;
 };
+
+int send_ioctl(struct cmd_context *ctx, void *cmd)
+{
+        ctx->ifr.ifr_data = cmd;
+        return ioctl(ctx->fd, SIOCETHTOOL, &ctx->ifr);
+}
+
+static struct ethtool_gstrings *
+get_stringset(struct cmd_context *ctx, enum ethtool_stringset set_id,
+              ptrdiff_t drvinfo_offset, int null_terminate)
+{
+        struct {
+                struct ethtool_sset_info hdr;
+                u32 buf[1];
+        } sset_info;
+        struct ethtool_drvinfo drvinfo;
+        u32 len, i;
+        struct ethtool_gstrings *strings;
+
+        sset_info.hdr.cmd = ETHTOOL_GSSET_INFO;
+        sset_info.hdr.reserved = 0;
+        sset_info.hdr.sset_mask = 1ULL << set_id;
+        if (send_ioctl(ctx, &sset_info) == 0) {
+                len = sset_info.hdr.sset_mask ? sset_info.hdr.data[0] : 0;
+        } else if (errno == EOPNOTSUPP && drvinfo_offset != 0) {
+                /* Fallback for old kernel versions */
+                drvinfo.cmd = ETHTOOL_GDRVINFO;
+                if (send_ioctl(ctx, &drvinfo))
+                        return NULL;
+                len = *(u32 *)((char *)&drvinfo + drvinfo_offset);
+        } else {
+                return NULL;
+        }
+
+        strings = calloc(1, sizeof(*strings) + len * ETH_GSTRING_LEN);
+        if (!strings)
+                return NULL;
+
+        strings->cmd = ETHTOOL_GSTRINGS;
+        strings->string_set = set_id;
+        strings->len = len;
+        if (len != 0 && send_ioctl(ctx, strings)) {
+                free(strings);
+                return NULL;
+        }
+
+        if (null_terminate)
+                for (i = 0; i < len; i++)
+                        strings->data[(i + 1) * ETH_GSTRING_LEN - 1] = 0;
+
+        return strings;
+}
 
 static int do_gstats(struct cmd_context *ctx)
 {
