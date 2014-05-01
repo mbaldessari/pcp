@@ -15,16 +15,6 @@
 #include <linux/sockios.h>
 #include <net/if.h>
 
-#ifndef MAX_ADDR_LEN
-#define MAX_ADDR_LEN	32
-#endif
-
-#ifndef HAVE_BE_TYPES
-typedef __uint16_t __be16;
-typedef __uint32_t __be32;
-typedef unsigned long long __be64;
-#endif
-
 typedef unsigned long long u64;
 typedef __uint32_t u32;
 typedef __uint16_t u16;
@@ -35,7 +25,6 @@ typedef __int32_t s32;
 #define ETHTOOL_GSTRINGS        0x0000001b /* get specified string set */
 #define ETHTOOL_GSTATS          0x0000001d /* get NIC-specific statistics */
 #define ETHTOOL_GSSET_INFO      0x00000037 /* Get string set info */
-
 
 #define ETH_GSTRING_LEN         32
 enum ethtool_stringset {
