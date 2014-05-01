@@ -225,5 +225,17 @@ int main(int argc, char **argp)
 	struct cmd_context ctx;
 	int k;
 
+	*argp++;
+	printf("dev: %s\n", *argp);
+	ctx.devname = *argp;
+	memset(&ctx.ifr, 0, sizeof(ctx.ifr));
+	strcpy(ctx.ifr.ifr_name, ctx.devname);
+
+	ctx.fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (ctx.fd < 0) {
+		perror("Cannot get control socket");
+		return -1;
+	}
+
 	do_gstats(&ctx);
 }
