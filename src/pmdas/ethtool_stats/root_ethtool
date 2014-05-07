@@ -1,0 +1,104 @@
+/*
+ * Copyright (c) 2000,2004,2007-2008 Silicon Graphics, Inc.  All Rights Reserved.
+ * Portions Copyright (c) International Business Machines Corp., 2002
+ * Portions Copyright (c) 2007-2009 Aconex.  All Rights Reserved.
+ * Portions Copyright (c) 2013 Red Hat.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+root {
+    network
+}
+
+network {
+    ethtool
+}
+
+network.ethtool {
+    tg3		
+}
+
+network.ethtool.tg3 {
+    rx_octets	256:0:0
+    rx_fragments	256:0:1
+    rx_ucast_packets	256:0:2
+    rx_mcast_packets	256:0:3
+    rx_bcast_packets	256:0:4
+    rx_fcs_errors	256:0:5
+    rx_align_errors	256:0:6
+    rx_xon_pause_rcvd	256:0:7
+    rx_xoff_pause_rcvd	256:0:8
+    rx_mac_ctrl_rcvd	256:0:9
+    rx_xoff_entered	256:0:10
+    rx_frame_too_long_errors	256:0:11
+    rx_jabbers	256:0:12
+    rx_undersize_packets	256:0:13
+    rx_in_length_errors	256:0:14
+    rx_out_length_errors	256:0:15
+    rx_64_or_less_octet_packets	256:0:16
+    rx_65_to_127_octet_packets	256:0:17
+    rx_128_to_255_octet_packets	256:0:18
+    rx_256_to_511_octet_packets	256:0:19
+    rx_512_to_1023_octet_packets	256:0:20
+    rx_1024_to_1522_octet_packets	256:0:21
+    rx_1523_to_2047_octet_packets	256:0:22
+    rx_2048_to_4095_octet_packets	256:0:23
+    rx_4096_to_8191_octet_packets	256:0:24
+    rx_8192_to_9022_octet_packets	256:0:25
+    tx_octets	256:0:26
+    tx_collisions	256:0:27
+    tx_xon_sent	256:0:28
+    tx_xoff_sent	256:0:29
+    tx_flow_control	256:0:30
+    tx_mac_errors	256:0:31
+    tx_single_collisions	256:0:32
+    tx_mult_collisions	256:0:33
+    tx_deferred	256:0:34
+    tx_excessive_collisions	256:0:35
+    tx_late_collisions	256:0:36
+    tx_collide_2times	256:0:37
+    tx_collide_3times	256:0:38
+    tx_collide_4times	256:0:39
+    tx_collide_5times	256:0:40
+    tx_collide_6times	256:0:41
+    tx_collide_7times	256:0:42
+    tx_collide_8times	256:0:43
+    tx_collide_9times	256:0:44
+    tx_collide_10times	256:0:45
+    tx_collide_11times	256:0:46
+    tx_collide_12times	256:0:47
+    tx_collide_13times	256:0:48
+    tx_collide_14times	256:0:49
+    tx_collide_15times	256:0:50
+    tx_ucast_packets	256:0:51
+    tx_mcast_packets	256:0:52
+    tx_bcast_packets	256:0:53
+    tx_carrier_sense_errors	256:0:54
+    tx_discards	256:0:55
+    tx_errors	256:0:56
+    dma_writeq_full	256:0:57
+    dma_write_prioq_full	256:0:58
+    rxbds_empty	256:0:59
+    rx_discards	256:0:60
+    rx_errors	256:0:61
+    rx_threshold_hit	256:0:62
+    dma_readq_full	256:0:63
+    dma_read_prioq_full	256:0:64
+    tx_comp_queue_full	256:0:65
+    ring_set_send_prod_index	256:0:66
+    ring_status_update	256:0:67
+    nic_irqs	256:0:68
+    nic_avoided_irqs	256:0:69
+    nic_tx_threshold_hit	256:0:70
+    mbuf_lwm_thresh_hit	256:0:71
+}
+    

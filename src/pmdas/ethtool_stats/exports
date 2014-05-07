@@ -1,0 +1,4 @@
+{
+    global: ethtool_stats_init;
+    local: *;
+};

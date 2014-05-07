@@ -1,0 +1,97 @@
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# Linux PMDA help file in the ASCII format
+#
+# lines beginning with a # are ignored
+# lines beginning @ introduce a new entry of the form
+#  @ metric_name oneline-text
+#  help test goes
+#  here over multiple lines
+#  ...
+#
+# the metric_name is decoded against the default PMNS -- as a special case,
+# a name of the form NNN.MM (for numeric NNN and MM) is interpreted as an
+# instance domain identification, and the text describes the instance domain
+#
+# blank lines before the @ line are ignored
+#
+@ network.ethtool.tg3.rx_octets placeholder
+@ network.ethtool.tg3.rx_fragments placeholder
+@ network.ethtool.tg3.rx_ucast_packets placeholder
+@ network.ethtool.tg3.rx_mcast_packets placeholder
+@ network.ethtool.tg3.rx_bcast_packets placeholder
+@ network.ethtool.tg3.rx_fcs_errors placeholder
+@ network.ethtool.tg3.rx_align_errors placeholder
+@ network.ethtool.tg3.rx_xon_pause_rcvd placeholder
+@ network.ethtool.tg3.rx_xoff_pause_rcvd placeholder
+@ network.ethtool.tg3.rx_mac_ctrl_rcvd placeholder
+@ network.ethtool.tg3.rx_xoff_entered placeholder
+@ network.ethtool.tg3.rx_frame_too_long_errors placeholder
+@ network.ethtool.tg3.rx_jabbers placeholder
+@ network.ethtool.tg3.rx_undersize_packets placeholder
+@ network.ethtool.tg3.rx_in_length_errors placeholder
+@ network.ethtool.tg3.rx_out_length_errors placeholder
+@ network.ethtool.tg3.rx_64_or_less_octet_packets placeholder
+@ network.ethtool.tg3.rx_65_to_127_octet_packets placeholder
+@ network.ethtool.tg3.rx_128_to_255_octet_packets placeholder
+@ network.ethtool.tg3.rx_256_to_511_octet_packets placeholder
+@ network.ethtool.tg3.rx_512_to_1023_octet_packets placeholder
+@ network.ethtool.tg3.rx_1024_to_1522_octet_packets placeholder
+@ network.ethtool.tg3.rx_1523_to_2047_octet_packets placeholder
+@ network.ethtool.tg3.rx_2048_to_4095_octet_packets placeholder
+@ network.ethtool.tg3.rx_4096_to_8191_octet_packets placeholder
+@ network.ethtool.tg3.rx_8192_to_9022_octet_packets placeholder
+@ network.ethtool.tg3.tx_octets placeholder
+@ network.ethtool.tg3.tx_collisions placeholder
+@ network.ethtool.tg3.tx_xon_sent placeholder
+@ network.ethtool.tg3.tx_xoff_sent placeholder
+@ network.ethtool.tg3.tx_flow_control placeholder
+@ network.ethtool.tg3.tx_mac_errors placeholder
+@ network.ethtool.tg3.tx_single_collisions placeholder
+@ network.ethtool.tg3.tx_mult_collisions placeholder
+@ network.ethtool.tg3.tx_deferred placeholder
+@ network.ethtool.tg3.tx_excessive_collisions placeholder
+@ network.ethtool.tg3.tx_late_collisions placeholder
+@ network.ethtool.tg3.tx_collide_2times placeholder
+@ network.ethtool.tg3.tx_collide_3times placeholder
+@ network.ethtool.tg3.tx_collide_4times placeholder
+@ network.ethtool.tg3.tx_collide_5times placeholder
+@ network.ethtool.tg3.tx_collide_6times placeholder
+@ network.ethtool.tg3.tx_collide_7times placeholder
+@ network.ethtool.tg3.tx_collide_8times placeholder
+@ network.ethtool.tg3.tx_collide_9times placeholder
+@ network.ethtool.tg3.tx_collide_10times placeholder
+@ network.ethtool.tg3.tx_collide_11times placeholder
+@ network.ethtool.tg3.tx_collide_12times placeholder
+@ network.ethtool.tg3.tx_collide_13times placeholder
+@ network.ethtool.tg3.tx_collide_14times placeholder
+@ network.ethtool.tg3.tx_collide_15times placeholder
+@ network.ethtool.tg3.tx_ucast_packets placeholder
+@ network.ethtool.tg3.tx_mcast_packets placeholder
+@ network.ethtool.tg3.tx_bcast_packets placeholder
+@ network.ethtool.tg3.tx_carrier_sense_errors placeholder
+@ network.ethtool.tg3.tx_discards placeholder
+@ network.ethtool.tg3.tx_errors placeholder
+@ network.ethtool.tg3.dma_writeq_full placeholder
+@ network.ethtool.tg3.dma_write_prioq_full placeholder
+@ network.ethtool.tg3.rxbds_empty placeholder
+@ network.ethtool.tg3.rx_discards placeholder
+@ network.ethtool.tg3.rx_errors placeholder
+@ network.ethtool.tg3.rx_threshold_hit placeholder
+@ network.ethtool.tg3.dma_readq_full placeholder
+@ network.ethtool.tg3.dma_read_prioq_full placeholder
+@ network.ethtool.tg3.tx_comp_queue_full placeholder
+@ network.ethtool.tg3.ring_set_send_prod_index placeholder
+@ network.ethtool.tg3.ring_status_update placeholder
+@ network.ethtool.tg3.nic_irqs placeholder
+@ network.ethtool.tg3.nic_avoided_irqs placeholder
+@ network.ethtool.tg3.nic_tx_threshold_hit placeholder
+@ network.ethtool.tg3.mbuf_lwm_thresh_hit placeholder
