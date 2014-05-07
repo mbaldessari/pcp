@@ -1,0 +1,124 @@
+'''
+Python implementation of the ethtool_stats Performance Metrics Domain Agent.
+'''
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+
+import os
+import time
+import ctypes
+from ctypes import c_int, c_long, POINTER, cast
+import cpmapi as c_api
+from pcp.pmda import PMDA, pmdaMetric, pmdaIndom, pmdaInstid
+from pcp.pmapi import pmUnits, pmContext as PCP
+import ethtool
+
+# This PMDA collects low-level ethtool statistics
+# Most drivers will output the exact same statistics no matter how many
+# NICs of the same type will be used. There are exceptions though:
+# Two NICs using the same driver could have different queue numbers and hence
+# a different number of metrics. For this reason I chose to model the metrics 
+# in the following form:
+# ethtool.eth0.tg3.rx_octets
+# ethtool.eth0.tg3.tx_octets
+# ethtool.eth0.tg3.rxq0_rx_bytes
+# ....
+# This model is a bit simpler and more flexible but is less structured
+
+class EthtoolStatsPMDA(PMDA):
+    '''
+    A Performance Metrics Domain Agent that collects low-level ethtool driver
+    statistics metrics.'''
+    def device_ifindex(self, device):
+        '''Return netdev ifindex value'''
+        f = open('/sys/class/net/%s/ifindex' % device, 'r')
+        ifindex = int(f.readline().strip())
+        f.close()
+        return ifindex
+
+    def normalize_metric(self, devname, module, metric):
+        '''Normalize metric names as ethtool strings might have spaces, colons and
+        brackets which should be removes'''
+        tmp = metric.strip()
+        for i in " :[]{}":
+            tmp = tmp.replace(i, '')
+        metricname = 'ethtool.%s.%s.%s' % (devname, module, tmp)
+        return metricname
+
+    def devices_with_stats(self):
+        '''Returns a list of (device name, module, ifindex) tuples which
+        support hardware statistics'''
+        ret = []
+        for i in ethtool.get_devices():
+            stats = ethtool.get_stats(i)
+            if len(stats) > 0:
+                ifindex = self.device_ifindex(i)
+                module = ethtool.get_module(i)
+                ret.append((i, module, ifindex))
+        return ret
+
+    def ethtoolstats_instance(self, serial):
+        if serial == 0:
+            self.ethtoolstats_fetch()
+
+    def ethtoolstats_fetch(self):
+        '''
+        Called once per PCP "fetch" PDU from pmcd(1)
+        Iterates over the all the NICs that support statistics and build a
+        nic -> stats dictionary
+        '''
+        for nic in self.stats:
+            self.stats[nic].clear()
+
+        for nic in self.stats:
+            self.stats[nic] = ethtool.get_stats(nic)
+
+    def ethtoolstats_fetch_callback(self, cluster, item, inst):
+        '''
+        Called per each metric to fetch. Uses self.mapping created at __init__
+        and self.stats created during _fetch
+        '''
+        if inst != c_api.PM_IN_NULL:
+            return [c_api.PM_ERR_INST, 0]
+
+        (devname, module, metric) = self.mapping[(cluster, item)]
+        value = self.stats[devname][metric]
+        return [value, 1]
+
+    def __init__(self, name, domain):
+        PMDA.__init__(self, name, domain)
+
+        self.stats = {}
+        self.mapping = {}
+        self.devices = self.devices_with_stats()
+        devicecount = 0
+        for (devname, module, ifindex) in self.devices:
+            eth_stats = ethtool.get_stats(devname)
+            self.stats[devname] = eth_stats
+            metriccount = 0
+            for metric in eth_stats:
+                metricname = self.normalize_metric(devname, module, metric)
+                self.mapping[(devicecount, metriccount)] = (devname, module, metric)
+                self.add_metric(metricname, pmdaMetric(self.pmid(devicecount, metriccount),
+                    c_api.PM_TYPE_U64, c_api.PM_INDOM_NULL, c_api.PM_SEM_COUNTER,
+                    pmUnits(0, 0, 1, 0, 0, c_api.PM_COUNT_ONE)))
+                metriccount += 1
+            devicecount += 1
+
+        self.set_fetch(self.ethtoolstats_fetch)
+        self.set_instance(self.ethtoolstats_instance)
+        self.set_fetch_callback(self.ethtoolstats_fetch_callback)
+
+if __name__ == '__main__':
+    EthtoolStatsPMDA('ethtoolstats', 255).run()
+
+# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0
