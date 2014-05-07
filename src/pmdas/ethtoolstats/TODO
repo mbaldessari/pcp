@@ -1,0 +1,14 @@
+- Should we move it to network.ethtool?
+If we do the stats like ring, pause params., we might as well rename the extension to 'ethtool'
+
+- Also export ethtool -g stats? (Ring sizes)
+
+- Pause parameters?
+
+- version: 1.78.17-0
+firmware-version: bc 6.2.25 phy 4.f
+bus-info: 0000:18:00.1
+
+- Write a testcase
+
+- Need to cater for module addition and removal after pmcd start

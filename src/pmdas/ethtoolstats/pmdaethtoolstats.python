@@ -1,0 +1,192 @@
+'''
+Python implementation of the ethtool_stats Performance Metrics Domain Agent.
+'''
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
+import os
+import time
+import ctypes
+from ctypes import c_int, c_long, POINTER, cast, c_uint64
+import cpmapi as c_api
+from pcp.pmda import PMDA, pmdaMetric, pmdaIndom, pmdaInstid
+from pcp.pmapi import pmUnits, pmContext as PCP
+import ethtool
+
+class EthtoolStatsPMDA(PMDA):
+    '''A Performance Metrics Domain Agent that collects low-level ethtool driver
+    statistics metrics.'''
+    # Dictionary of dictionaries containing the domain instances. 
+    # First key is the [module], the second key is the [metric]
+    # Assigned as: self.indoms[module][metric] = self.indom(self.indomcount)
+    indoms = {}
+    # Contains the effective data to be fed to the fetch_callback
+    # self.instances[module][metric][dev] = c_long(stats[metric])
+    instances = {}
+    # These two are the counters to create the full PMID
+    indomcount = 0
+    modulecount = 0
+    # This dictionary holds the data as fetched by ethtool.get_stats()
+    # Populated via: self.stats[dev] = (module, ifindex, ethtool.get_stats(dev))
+    stats = {}
+    # This holds the mapping between self.mapping[(self.modulecount, count)] = (module, metric)
+    # in order to return the values via ethtoolstats_fetch_callback(self, cluster, item, inst):
+    mapping = {}
+
+    def device_ifindex(self, device):
+        '''Return netdev ifindex value'''
+        f = open('/sys/class/net/%s/ifindex' % device, 'r')
+        ifindex = int(f.readline().strip())
+        f.close()
+        return ifindex
+
+    def devices_with_stats(self):
+        '''Returns a list of (device name, module, ifindex) tuples which
+        support hardware statistics '''
+        ret = []
+        for i in ethtool.get_devices():
+            try:
+                stats = ethtool.get_stats(i)
+            except IOError:
+                continue
+
+            if len(stats) > 0:
+                ifindex = self.device_ifindex(i)
+                module = ethtool.get_module(i)
+                ret.append((i, module, ifindex))
+        return ret
+
+    def ethtoolstats_instance(self, serial):
+        self.log('Instance called: %s' % serial)
+        if serial == 0:
+            self.ethtoolstats_fetch()
+
+    def ethtoolstats_fetch(self):
+        '''Called once per PCP "fetch" PDU from pmcd(1)
+        Iterates over the all the NICs that support statistics and build a
+        statistics dictionary'''
+        newdevices = self.devices_with_stats()
+        modules = {}
+        # If the newdevices list has a new module we need to add new metrics
+        # for it. We need to call add_ethtool_driver() here
+        for (newdev, module, ifindex) in newdevices:
+            modules[module] = True
+            if (newdev, module, ifindex) not in self.devices:
+                self.log('Found a new device: %s[%s]' % (newdev, module))
+                # FIXME: adding this call gets me a python segfault
+                # python[16463]: segfault at 8 ip 0000003c14078340 sp 00007fffafcee158 error 4 in libpython2.6.so.1.0[3c14000000+15d000]
+                self.add_ethtool_driver(newdev)
+
+
+        for (dev, module, ifindex) in self.devices:
+            if (dev, module, ifindex) not in newdevices:
+                self.log('Found a removed device: %s[%s]' % (dev, module))
+                if module not in modules:
+                    self.log('Last device using %s is gone' % module)
+                # FIXME: need to clean this mapping as well
+                #self.mapping[(self.modulecount, count)] = (module, metric)
+
+        # We walk both new device list and old device list. So if a module
+        # is removed we will clear its instances and not have them linger
+        # on set to zero forever
+        for (dev, module, ifindex) in newdevices:
+            self.stats[dev] = (module, ifindex, ethtool.get_stats(dev))
+
+        for module in modules:
+            if module in self.instances:
+                self.log('Clearing: %s' % module)
+                self.instances[module].clear()
+
+        for dev in self.stats:
+            module = self.stats[dev][0]
+            ifindex = self.stats[dev][1]
+            stats = self.stats[dev][2]
+            for metric in stats:
+                #self.log('Stat %s-%s: %s => %s' % (module, dev, metric, stats[metric]))
+                if metric not in self.instances[module]:
+                    self.instances[module][metric] = {}
+                self.instances[module][metric][dev] = c_long(stats[metric])
+
+        for module in modules:
+            for metric in self.instances[module]:
+                #self.log('About to replace %s-%s: %s' % (module, metric, self.instances[module][metric]))
+                self.replace_indom(self.indoms[module][metric],
+                                   self.instances[module][metric])
+
+        self.devices = newdevices
+
+    def ethtoolstats_fetch_callback(self, cluster, item, inst):
+        '''Called per each metric to fetch. Uses self.mapping created at __init__
+        and self.stats created during _fetch '''
+        self.log('Fetch callback: %s %s %s' % (cluster, item, inst))
+        try:
+            (module, metric) = self.mapping[(cluster, item)]
+            self.log('Module %s - Metric %s' % (module, metric))
+        except:
+            self.log('Could not find %s:%s:%s' % (cluster, item, inst))
+            return [c_api.PM_ERR_PMID, 0]
+        voidp = self.inst_lookup(self.indoms[module][metric], inst)
+        valuep = cast(voidp, POINTER(c_long))
+        return [valuep.contents.value, 1]
+
+    def add_ethtool_driver(self, devname):
+        '''Adds the metrics corresponding to the driver of the device
+        and creates and indom for each'''
+        module = ethtool.get_module(devname)
+        self.log('add_ethtool_driver: %s[%s]' % (devname, module))
+        if module not in self.indoms:
+            self.indoms[module] = {}
+        if module not in self.instances:
+            self.instances[module] = {}
+
+        stats = ethtool.get_stats(devname)
+        #self.log('add_ethtool_driver stats: %s' % stats)
+        ifindex = self.device_ifindex(devname)
+        self.stats[devname] = (module, ifindex, stats)
+        added_metrics = False
+        for count, metric in enumerate(stats):
+            if metric in self.indoms[module]:
+                #self.log('skipped existing metric')
+                continue
+            metricname = 'ethtool.%s.%s' % (module, metric)
+            self.log('Metricname: %s - modulecount: %s indomcount: %s -count: %s' % (metricname, self.modulecount, self.indomcount, count))
+            self.indoms[module][metric] = self.indom(self.indomcount)
+            self.mapping[(self.modulecount, count)] = (module, metric)
+            self.instances[module][metric] = {}
+            self.add_indom(pmdaIndom(self.indoms[module][metric], self.instances[module][metric]))
+            self.add_metric(metricname, pmdaMetric(self.pmid(self.modulecount, count),
+                    c_api.PM_TYPE_U64, self.indoms[module][metric], c_api.PM_SEM_COUNTER,
+                    pmUnits(0, 0, 1, 0, 0, c_api.PM_COUNT_ONE)))
+
+            added_metrics = True
+            self.indomcount += 1
+
+        # We only increase the module count if we added any metrics/indoms
+        if added_metrics:
+            self.modulecount += 1
+
+    def __init__(self, name, domain):
+        PMDA.__init__(self, name, domain)
+
+        self.log('Init %s - %s' % (name, domain))
+
+        self.devices = self.devices_with_stats()
+        for (dev, module, ifindex) in self.devices:
+            self.add_ethtool_driver(dev)
+
+        self.set_fetch(self.ethtoolstats_fetch)
+        self.set_instance(self.ethtoolstats_instance)
+        self.set_fetch_callback(self.ethtoolstats_fetch_callback)
+
+if __name__ == '__main__':
+    EthtoolStatsPMDA('ethtoolstats', 255).run()
+
+# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0
