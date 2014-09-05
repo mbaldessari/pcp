@@ -1,0 +1,59 @@
+- Cluster together within a table all the metrics that share an indom
+  so either a table that shows all the metrics shared by the same indom.
+  Like: eth0: network.interface.in.bytes, network.interface.mtu, ...
+
+- Test start/end time
+
+- Test sample interval
+
+- Override the -a argument and also allow a single file parameter?
+
+- Measure performance of parsing and creating pdf and jot down
+  the biggest time-consuming culprits. Consider CYTHON for some
+  functions?
+
+- How to visualize stuff with a truckload of instances like the case
+  when we collect proc.* with the proc pmda
+
+- proc.nprocs does not have a dedicated index entry?
+
+- Add the possibility to add correlation time entries
+
+- the description of the metric is not printed
+
+- Make use of the convenience pmcc.py class
+
+- Work on moving some of the basic archive parsing functionality
+  in the pcp python bindings themselves
+
+- Add a default set of custom graphs that are always automatically included
+
+- Verify that all the maths in rate conversion are always correct
+
+- Like sarstats make it multiprocess for faster processing ? The archive
+  parsing could be done by splitting the whole time interval by the nr of
+  the CPUs and each could have an archive reading process
+
+- In the progress bar add a % of completion (we know start_time and end_time, so it should be easy)
+
+- Run the code through pylint and pyflake
+
+- Add test cases that exercise all possible command arguments
+
+- Have the possibility to use a config file to customize how the pdf looks
+
+- Fix setup.py and test the packaging
+
+- Test it with ex4 archives
+  
+- Add on ex4 the monitoring and collection of per process data and
+  test a pdf creation with that
+
+- Add bash autocompletion
+
+- There is a plan to add a mode to libpcp on archive context creation
+  where it will open a directory (like code here wishes to) and produce
+  a context which sources data from all archives in that directory.
+  When that work is tackled, it may simplify the mode you have here
+  (planned?) where it scans a directory for pcp archives.
+  [Michele] This needs revisiting when this code appears upstream

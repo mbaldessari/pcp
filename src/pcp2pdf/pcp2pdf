@@ -1,0 +1,141 @@
+#!/usr/bin/python
+# pcp2pdf - pcp(1) report graphing utility
+# Copyright (C) 2014  Michele Baldessari
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
+from __future__ import print_function
+
+import os
+import sys
+
+import cpmapi as c_api
+from pcp2pdf_stats import PcpStats
+from pcp import pmapi
+
+VERSION = '0.1'
+
+default_custom_graphs = [
+        'proc.runq:proc.runq.blocked,proc.runq.defunct,proc.runq.runnable,proc.runq.sleeping',
+    ]
+
+class _Options(object):
+    def __init__(self):
+        self.input_file = ""
+        self.start_time = None
+        self.end_time = None
+        self.include = []
+        self.exclude = []
+        self.custom_graphs = []
+        self.raw = False
+        self.output_file = "output.pdf"
+        self.opts = self.setup()
+
+    def setup(self):
+        """ Setup default command line argument option handling """
+        # FIXME: There has got to be a better way to indent the text in a visually
+        # pleasing way
+        t = " " * 24
+        opts = pmapi.pmOptions()
+        opts.pmSetOptionCallback(self.option_callback)
+        opts.pmSetOverrideCallback(self.override)
+        opts.pmSetShortOptions("rVi:e:o:c:?S:T:t:a:")
+        opts.pmSetShortUsage("[options] -a <pcp_archive>")
+        opts.pmSetLongOptionHeader("Options")
+        opts.pmSetLongOption("include", 1, 'i', '', "Include specific metrics")
+        opts.pmSetLongOptionText(t + "Includes metrics which match the specified regular expression.")
+        opts.pmSetLongOptionText(t + "For example: --include 'network.*'. The option can be specified")
+        opts.pmSetLongOptionText(t + "multiple times. If only --include is specified, onle the matching")
+        opts.pmSetLongOptionText(t + "metrics will be included in the output. If both --include and --exclude")
+        opts.pmSetLongOptionText(t + "are specified first all excluded metrics are evaluted and then the included ones")
+        opts.pmSetLongOption("exclude", 1, 'e', '', "Exclude specific metrics")
+        opts.pmSetLongOptionText(t + "Excludes metrics which match the specified regular expression. For example:")
+        opts.pmSetLongOptionText(t + "--exclude 'network.*'. The option can be specified multiple times. If only")
+        opts.pmSetLongOptionText(t + "--exclude is specified, all metrics are shown except the specified ones")
+        opts.pmSetLongOption("output", 1, 'o', '', "Output file name (default: output.pdf)")
+        opts.pmSetLongOption("custom", 1, 'c', '', "Add custom graphs")
+        opts.pmSetLongOptionText(t + "Add ability to create graphs with multiple metrics. For example:")
+        opts.pmSetLongOptionText(t + "--custom 'foo:network.tcp.outrsts,network.tcp.ofoqueue' The above would create a")
+        opts.pmSetLongOptionText(t + "'foo' page with the two metrics combined in a single graph. The general syntax is:")
+        opts.pmSetLongOptionText(t + "--custom '<label>:<metric1>,...<metricN>'. The option can be specified multiple times") 
+        opts.pmSetLongOption("raw", 0, 'r', '', "Disable rate conversions")
+        opts.pmSetLongOptionText(t + "Disable the rate conversion for all the metrics that have the PM_SEM_COUNTER semantic")
+        opts.pmSetLongOptionText(t + "associated with them. By default those are converted via: (value(T) - value(T-1)) / (T - T-1)")
+        opts.pmSetLongOptionStart()
+        opts.pmSetLongOptionFinish()
+        opts.pmSetLongOptionInterval()
+        opts.pmSetLongOptionArchive()
+        opts.pmSetLongOptionVersion()
+        opts.pmSetLongOptionHelp()
+        return opts
+
+    def override(self, opt):
+        """ Override a few standard PCP options to match free(1) """
+        # pylint: disable=R0201
+        #if opt == 'g':
+        #    return 1
+        return 0
+
+    def option_callback(self, opt, optarg, index):
+        """ Perform setup for an individual command line option """
+        # pylint: disable=W0613
+        if opt == "S":
+            self.start_time = optarg
+        elif opt == "T":
+            self.end_time = optarg
+        elif opt == "t":
+            self.interval = optarg
+        elif opt == "e":
+            self.exclude.append(optarg)
+        elif opt == "c":
+            self.custom_graphs.append(optarg)
+        elif opt == "i":
+            self.include.append(optarg)
+        elif opt == "a":
+            self.input_file = optarg
+        elif opt == "o":
+            self.output_file = optarg
+        elif opt == "r":
+            self.raw = True
+
+if __name__ == '__main__':
+    global opts
+    opts = _Options()
+    if c_api.pmGetOptionsFromList(sys.argv) != 0:
+        c_api.pmUsageMessage()
+        sys.exit(1)
+
+    pcp_files = opts.opts.pmGetOptionArchives()
+    if pcp_files == None:
+        print("Error: No pcp archives specified")
+        c_api.pmUsageMessage()
+        sys.exit(1)
+
+    if len(pcp_files) == 1 and not os.path.exists(pcp_files[0]):
+        print("Path does not exist: {0}".format(pcp_files[0]))
+        sys.exit(1)
+
+    print("Parsing files: {0}".format(" ".join(map(os.path.basename, pcp_files))), end='')
+    print()
+
+    s = opts.opts.pmGetOptionStart()
+    e = opts.opts.pmGetOptionFinish()
+
+    # FIXME: make it work with multiple archive files
+    pcpstats = PcpStats(pcp_files[0], opts)
+    pcpstats.output(output_file=opts.output_file)
+
+# vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

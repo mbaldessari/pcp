@@ -1,0 +1,4 @@
+*.pyc
+*.pdf
+build_python
+tests/

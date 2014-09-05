@@ -381,3 +381,17 @@ Description: Performance Co-Pilot (PCP) web API service
  Provides a daemon (pmwebd) that binds a large subset of the Performance
  Co-Pilot (PCP) client API (PMAPI) to RESTful web applications using the
  HTTP (PMWEBAPI) protocol.
+
+Package: pcp-gui
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: xvfb, qt4-dev-tools
+Recommends: pcp, pcp-doc
+Architecture: any
+Description: Visualisation tools for the Performance Co-Pilot toolkit
+ The PCP GUI package primarily includes visualisation tools for
+ monitoring systems using live and archived Performance Co-Pilot
+ (PCP) sources.
+ .
+ These tools have dependencies on graphics libraries which may or
+ may not be installed on server machines, so PCP GUI is delivered
+ as a separate package to the core PCP infrastructure.
