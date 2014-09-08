@@ -55,7 +55,7 @@ class _Options(object):
         opts.pmSetShortOptions("rVi:e:o:c:?S:T:t:a:")
         opts.pmSetOptionFlags(c_api.PM_OPTFLAG_BOUNDARIES)
         opts.pmSetOptionFlags(c_api.PM_OPTFLAG_MULTI)
-        opts.pmSetShortUsage("[options] -a <pcp_archive>")
+        opts.pmSetShortUsage("[options] -a <pcp_archive>\nFor example:\npcp2pdf -S \"May 30 12:00 2014\" -T \"May 30 15:00 2014\" -t \"1 minute\" -a tests/20140530.0")
         opts.pmSetLongOptionHeader("Options")
         opts.pmSetLongOption("include", 1, 'i', '', "Include specific metrics")
         opts.pmSetLongOptionText(t + "Includes metrics which match the specified regular expression.")

@@ -2,8 +2,6 @@
   so either a table that shows all the metrics shared by the same indom.
   Like: eth0: network.interface.in.bytes, network.interface.mtu, ...
 
-- Test start/end time
-
 - Test sample interval
 
 - Override the -a argument and also allow a single file parameter?
