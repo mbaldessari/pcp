@@ -12,6 +12,9 @@
   the biggest time-consuming culprits. Consider CYTHON for some
   functions?
 
+- Make sure it runs from the end install path as well (i.e. install the
+  py modules in the proper place)
+
 - How to visualize stuff with a truckload of instances like the case
   when we collect proc.* with the proc pmda
 

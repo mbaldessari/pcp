@@ -67,15 +67,15 @@ class PcpArchive(object):
         self.context = pmapi.pmContext.fromOptions(opts.opts, sys.argv)
         self.context.pmTraversePMNS('', self._pmns_callback)
 
-        tmp = self.context.pmGetArchiveLabel()
-        self.start_time = tmp.start
-        self.end_time = self.context.pmGetArchiveEnd()
+        self.start = opts.opts.pmGetOptionStart()
+        self.end = opts.opts.pmGetOptionFinish()
+        print('Start: {0}[{1}] - End: {2}[{3}]'.format(datetime.fromtimestamp(self.start),
+            self.start, datetime.fromtimestamp(self.end), self.end))
 
-    def _timestamp_to_datetime(self, tstamp):
-        '''Convert a timestamp object (tv_sec + tv_usec) in a datetime
-        object'''
+    def _timestamp_to_secs(self, tstamp):
+        '''Convert a timestamp object (tv_sec + tv_usec) to seconds'''
         secs = tstamp.tv_sec + (tstamp.tv_usec * 10**-6)
-        return datetime.fromtimestamp(secs)
+        return secs
 
     def _pmns_callback(self, label):
         '''Callback for the PMNS tree walk'''
@@ -130,14 +130,6 @@ class PcpArchive(object):
         '''Given a list of metrics, returns a list of PMIDs'''
         return self.context.pmLookupName(metrics)
 
-    def get_timeinterval(self):
-        '''Returns the a datetime tuple of the start and end of the
-        archive'''
-        # FIXME: need to use pmLocaltime here (??)
-        d1 = self._timestamp_to_datetime(self.start_time)
-        d2 = self._timestamp_to_datetime(self.end_time)
-        return (d1, d2)
-
     def get_values(self, progress=None):
         '''Returns a dictionary of dictionary containing all the data within
         a PCP archive log file. Data will be returned as a a tuple
@@ -155,7 +147,7 @@ class PcpArchive(object):
         the actual values. If a metric has no indom 0 will be used as its key'''
 
         data = {}
-        self.context.pmSetMode(c_api.PM_MODE_FORW, self.start_time, 0)
+        self.context.pmSetMode(c_api.PM_MODE_FORW, self.start, 0)
         skipped_metrics = []
         # This is just used as an optimization. The keys are (numpmid, numinst) and the value is
         # the indom name. This avoids too many expensive calls to pmNameInDomArchive
@@ -171,14 +163,15 @@ class PcpArchive(object):
                 else:
                     raise error
 
-            ts = self._timestamp_to_datetime(result.contents.timestamp)
-            #if ((self.start and ts < self.start) or
-            #    (self.end and ts > self.end)):
-            #    self.context.pmFreeResult(result)
-            #    if progress:
-            #        progress(False)
-            #    continue
+            secs = self._timestamp_to_secs(result.contents.timestamp)
+            if not (float(self.start) <= secs and secs <= float(self.end)):
+                self.context.pmFreeResult(result)
+                if progress:
+                    progress(False)
+                #print('OK Start {0} - TS: {1} - End: {2}'.format(self.start, secs, self.end))
+                continue
 
+            ts = datetime.fromtimestamp(secs)
             if progress:
                 progress(True)
             for i in range(result.contents.numpmid):

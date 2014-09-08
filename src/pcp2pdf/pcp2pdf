@@ -53,6 +53,8 @@ class _Options(object):
         opts.pmSetOptionCallback(self.option_callback)
         opts.pmSetOverrideCallback(self.override)
         opts.pmSetShortOptions("rVi:e:o:c:?S:T:t:a:")
+        opts.pmSetOptionFlags(c_api.PM_OPTFLAG_BOUNDARIES)
+        opts.pmSetOptionFlags(c_api.PM_OPTFLAG_MULTI)
         opts.pmSetShortUsage("[options] -a <pcp_archive>")
         opts.pmSetLongOptionHeader("Options")
         opts.pmSetLongOption("include", 1, 'i', '', "Include specific metrics")
@@ -130,9 +132,6 @@ if __name__ == '__main__':
 
     print("Parsing files: {0}".format(" ".join(map(os.path.basename, pcp_files))), end='')
     print()
-
-    s = opts.opts.pmGetOptionStart()
-    e = opts.opts.pmGetOptionFinish()
 
     # FIXME: make it work with multiple archive files
     pcpstats = PcpStats(pcp_files[0], opts)

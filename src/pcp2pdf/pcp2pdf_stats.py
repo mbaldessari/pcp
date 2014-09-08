@@ -536,9 +536,7 @@ class PcpStats(object):
         print("Done removing: {0}".format(self.tempdir))
 
     def print_info(self):
-        # Print interval
-        (start, end) = self.pcparchive.get_timeinterval()
-        print('Interval: {0} - {1}'.format(start, end))
+        # FIXME: print start and end of the archive
         # Print the metrics
         d = {}
         for metric in self.metrics:
