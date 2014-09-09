@@ -135,7 +135,7 @@ if __name__ == '__main__':
     print()
 
     # FIXME: make it work with multiple archive files
-    pcpstats = PcpStats(pcp_files[0], opts)
+    pcpstats = PcpStats([pcp_files[0]], opts)
     pcpstats.output(output_file=opts.output_file)
 
 # vim: autoindent tabstop=4 expandtab smarttab shiftwidth=4 softtabstop=4 tw=0

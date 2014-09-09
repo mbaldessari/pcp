@@ -67,3 +67,5 @@
   When that work is tackled, it may simplify the mode you have here
   (planned?) where it scans a directory for pcp archives.
   [Michele] This needs revisiting when this code appears upstream
+
+- Write MAN page

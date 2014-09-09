@@ -18,6 +18,7 @@
 # MA 02110-1301, USA.
 
 from __future__ import print_function
+from datetime import datetime
 from hashlib import sha1
 from itertools import repeat
 import multiprocessing
@@ -425,9 +426,17 @@ class PcpStats(object):
         doc = PcpDocTemplate(output_file, pagesize=landscape(A4))
         hostname = self.pcparchive.get_hostname()
         self.story.append(Paragraph('%s' % hostname, doc.centered))
-        self.story.append(Spacer(1, 0.05 * inch))
-        self.story.append(Paragraph('%s' % (" ".join(self.args)),
-                          doc.small_centered))
+        self.story.append(Spacer(1, 0.10 * inch))
+        self.story.append(Paragraph('PCP Archives: %s' % (" ".join(self.args)),
+                          doc.mono))
+
+        self.story.append(Paragraph('Start: %s - End: %s' %
+            (datetime.fromtimestamp(self.pcparchive.start),
+            datetime.fromtimestamp(self.pcparchive.end)), doc.mono))
+        self.story.append(Paragraph('Interval: %s seconds' %
+            (self.pcparchive.interval), doc.mono))
+        self.story.append(Spacer(1, 0.10 * inch))
+
         self._do_heading('Table of contents', doc.centered_index)
         self.story.append(doc.toc)
         self.story.append(PageBreak())

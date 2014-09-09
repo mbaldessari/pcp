@@ -84,6 +84,13 @@ class PcpDocTemplate(BaseDocTemplate):
             fontSize=14,
             leading=14)
 
+        self.mono_centered = PS(
+            name='Mono',
+            alignment=1,
+            fontName='Courier',
+            fontSize=16,
+            leading=16)
+
         self.mono = PS(
             name='Mono',
             fontName='Courier',
