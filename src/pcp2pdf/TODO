@@ -1,10 +1,33 @@
 - Cluster together within a table all the metrics that share an indom
   so either a table that shows all the metrics shared by the same indom.
   Like: eth0: network.interface.in.bytes, network.interface.mtu, ...
+  Need to see how other tools con do it (given the staticness of pdf)
+  and related:
+  How to visualize stuff with a truckload of instances like the case
+  when we collect proc.* with the proc pmda
+  When there are a bunch of instances (> X) we could automatically split the
+  pages, and still allowing the user to specify the threshold.
+  We could also add a switch --group-by-instance and put all the instances
+  with the same name on the same page (although not sure how much sense
+  that would make)
 
-- Test sample interval
+- Test sample interval. Currently not working because pmFetchArchive() does:
+  if ((n = pmWhichContext()) >= 0) {
+      ctxp = __pmHandleToPtr(n);
+      if (ctxp == NULL)
+          n = PM_ERR_NOCONTEXT;
+      else {
+          ctxp_mode = (ctxp->c_mode & __PM_MODE_MASK);
+          if (ctxp->c_type != PM_CONTEXT_ARCHIVE)
+              n = PM_ERR_NOTARCHIVE;
+          else if (ctxp_mode == PM_MODE_INTERP)
+              /* makes no sense! */
+              n = PM_ERR_MODE;
+  Do I need to go back to pmFetch() or should pmFetchArchive() be amended?
 
 - Override the -a argument and also allow a single file parameter?
+
+- Automatically detect gaps in the PCP archive and mark them as such in the graph
 
 - Measure performance of parsing and creating pdf and jot down
   the biggest time-consuming culprits. Consider CYTHON for some
@@ -12,9 +35,6 @@
 
 - Make sure it runs from the end install path as well (i.e. install the
   py modules in the proper place)
-
-- How to visualize stuff with a truckload of instances like the case
-  when we collect proc.* with the proc pmda
 
 - proc.nprocs does not have a dedicated index entry?
 
@@ -31,11 +51,14 @@
 
 - Verify that all the maths in rate conversion are always correct
 
+- In the progress bar add a % of completion (we know start_time and end_time, so it should be easy)
+
 - Like sarstats make it multiprocess for faster processing ? The archive
   parsing could be done by splitting the whole time interval by the nr of
-  the CPUs and each could have an archive reading process
-
-- In the progress bar add a % of completion (we know start_time and end_time, so it should be easy)
+  the CPUs and each could have an archive reading process.
+  The graph creation part is done. We could also parallelize the parsing
+  of the archive by having a context per process chewing on intervals split
+  by CPU.
 
 - Run the code through pylint and pyflake
 
