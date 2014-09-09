@@ -79,7 +79,8 @@ class PcpArchive(object):
         '''Callback for the PMNS tree walk'''
         pmid = self.context.pmLookupName(label)
         desc = self.context.pmLookupDesc(pmid[0])
-        self.pmns[label] = (desc.type, desc.sem, desc.contents.units)
+        self.pmns[label] = (desc.type, desc.sem, desc.contents.units, desc.contents.type,
+                self.context.pmUnitsStr(desc.contents.units), self.context.pmTypeStr(desc.contents.type))
 
     def _extract_value(self, result, desc, i, inst=0):
         '''Return python value given a pmExtractValue set of parameters'''

@@ -26,7 +26,8 @@
 
 - Add the possibility to add correlation time entries
 
-- the description of the metric is not printed
+- Currently we need a running pmcd instance to try and fetch help text. 
+  Is there a smarter way?
 
 - Make use of the convenience pmcc.py class
 

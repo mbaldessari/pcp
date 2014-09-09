@@ -279,7 +279,7 @@ class PcpStats(object):
 
         # Rate convert all the PM_SEM_COUNTER metrics
         for metric in self.all_data:
-            (mtype, msem, munits) = self.pcparchive.get_metric_info(metric)
+            (mtype, msem, munits, dtype, desc_units, desc_type) = self.pcparchive.get_metric_info(metric)
             if msem != c_api.PM_SEM_COUNTER:
                 continue
 
@@ -467,11 +467,14 @@ class PcpStats(object):
                 string_metrics.append(metric)
             else:
                 fname = self._graph_filename([metric])
-                units = self.pcparchive.get_metric_info(metric)[2]
-                text = '' #'%s' % units
+                units_str = self.pcparchive.get_metric_info(metric)[4]
+                type_str = self.pcparchive.get_metric_info(metric)[5]
                 if isinstance(metric, str) and metric in self.pcphelp.help_text:
-                    text = '<strong>%s</strong>: %s (%s)' % (metric, self.pcphelp.help_text[metric],
-                            units)
+                    help_text = self.pcphelp.help_text[metric]
+                else:
+                    help_text = '...'
+
+                text = '<strong>%s</strong>: %s (%s - %s)' % (metric, help_text, units_str, type_str)
                 if rate_converted[metric] != False:
                     text = text + ' - <em>%s</em>' % 'rate converted'
                 self.all_graphs.append((metric, fname, [metric], text))
