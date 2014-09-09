@@ -42,6 +42,7 @@ class _Options(object):
         self.custom_graphs = []
         self.raw = False
         self.output_file = "output.pdf"
+        self.interval = None
         self.opts = self.setup()
 
     def setup(self):

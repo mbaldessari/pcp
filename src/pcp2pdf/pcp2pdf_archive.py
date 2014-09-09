@@ -63,14 +63,12 @@ class PcpArchive(object):
     def __init__(self, pcp_fname, opts):
         '''Opens a PCP archive and does an initial walk of the PMNS tree'''
         self.pcparchive = pcp_fname
-        #self.context = pmapi.pmContext(c_api.PM_CONTEXT_ARCHIVE, pcp_fname)
         self.context = pmapi.pmContext.fromOptions(opts.opts, sys.argv)
         self.context.pmTraversePMNS('', self._pmns_callback)
 
         self.start = opts.opts.pmGetOptionStart()
         self.end = opts.opts.pmGetOptionFinish()
-        print('Start: {0}[{1}] - End: {2}[{3}]'.format(datetime.fromtimestamp(self.start),
-            self.start, datetime.fromtimestamp(self.end), self.end))
+        self.interval = opts.opts.pmGetOptionInterval()
 
     def _timestamp_to_secs(self, tstamp):
         '''Convert a timestamp object (tv_sec + tv_usec) to seconds'''
@@ -148,13 +146,23 @@ class PcpArchive(object):
 
         data = {}
         self.context.pmSetMode(c_api.PM_MODE_FORW, self.start, 0)
+        self.context.pmFetchArchive()
+        if self.interval:
+            self.context.pmSetMode(c_api.PM_MODE_INTERP | c_api.PM_XTB_SET(c_api.PM_TIME_SEC), self.start,
+                self.interval)
+
         skipped_metrics = []
         # This is just used as an optimization. The keys are (numpmid, numinst) and the value is
         # the indom name. This avoids too many expensive calls to pmNameInDomArchive
         indom_map = {}
+        metrics = self.get_metrics()
+        pmids = self.get_pmids(metrics)
         while 1:
             try:
-                result = self.context.pmFetchArchive()
+                # Trying to do this without pmFetchArchive() which does not support INTERP mode
+                # result = self.context.pmFetchArchive()
+                pmids = self.context.pmLookupName(metrics)
+                result = self.context.pmFetch(pmids)
             except pmapi.pmErr, error:
                 # Exit if we are at the end of the file or if the record is corrupted
                 # Signal any other issues
@@ -168,7 +176,6 @@ class PcpArchive(object):
                 self.context.pmFreeResult(result)
                 if progress:
                     progress(False)
-                #print('OK Start {0} - TS: {1} - End: {2}'.format(self.start, secs, self.end))
                 continue
 
             ts = datetime.fromtimestamp(secs)
