@@ -158,7 +158,7 @@ class PcpStats(object):
         # Verify if there are any custom graphs
         for graph in opts.custom_graphs:
             try:
-                (label,metrics_str) = graph.split(':')
+                (label, metrics_str) = graph.split(':')
             except:
                 print("Failed to parse: {0}".format(i))
                 sys.exit(-1)
@@ -179,10 +179,10 @@ class PcpStats(object):
 
     def _graph_filename(self, metrics, extension='.png'):
         '''Creates a unique constant file name given a list of metrics'''
-	# We're on python 2.6o .jpg even though graph quality is affected,
+        # We're on python 2.6o .jpg even though graph quality is affected,
         # because the underlying imaging lib bails out on a few graphs from
         # time to time
-	pyver = sys.version_info
+        pyver = sys.version_info
         if pyver[0] == 2 and pyver[1] == 6:
             extension = '.jpg'
         if isinstance(metrics, list):
