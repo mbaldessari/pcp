@@ -20,9 +20,7 @@
   functions?
 
 - Make sure it runs from the end install path as well (i.e. install the
-  py modules in the proper place)
-
-- proc.nprocs does not have a dedicated index entry?
+  py modules in the proper place) i.e. Fix setup.py and test the packaging
 
 - Add the possibility to add correlation time entries
 
@@ -52,8 +50,6 @@
 - Add test cases that exercise all possible command arguments
 
 - Have the possibility to use a config file to customize how the pdf looks
-
-- Fix setup.py and test the packaging
 
 - Test it with ex4 archives
   
