@@ -22,7 +22,8 @@
 - Make sure it runs from the end install path as well (i.e. install the
   py modules in the proper place) i.e. Fix setup.py and test the packaging
 
-- Add the possibility to add correlation time entries
+- Correlation labels don't work so well when interpolation is happening
+  (i.e. when the user specifies -t interval)
 
 - Currently we need a running pmcd instance to try and fetch help text. 
   Is there a smarter way?
@@ -42,12 +43,12 @@
   parsing could be done by splitting the whole time interval by the nr of
   the CPUs and each could have an archive reading process.
   The graph creation part is done. We could also parallelize the parsing
-  of the archive by having a context per process chewing on intervals split
-  by CPU.
+  of the archive by having a context per process chewing on intervals split by CPU.
 
 - Run the code through pylint and pyflake
 
-- Add test cases that exercise all possible command arguments
+- Add test cases that exercise all possible command arguments, use some of the
+  archive files under qa/
 
 - Have the possibility to use a config file to customize how the pdf looks
 

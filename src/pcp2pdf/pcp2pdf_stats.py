@@ -100,11 +100,11 @@ class PcpStats(object):
     story = []
 
     def __init__(self, args, opts):
-        #start_time=None, end_time=None, inc=None, exc=None, graphs=None, raw=False):
         self.args = args
         self.pcphelp = PcpHelp()
         self.pcparchive = PcpArchive(args, opts)
         self.raw = opts.raw
+        self.labels = opts.labels
         # Using /var/tmp as /tmp is ram-mounted these days
         self.tempdir = tempfile.mkdtemp(prefix='pcpstats', dir='/var/tmp')
         # This will contain all the metrics found in the archive file
@@ -245,6 +245,22 @@ class PcpStats(object):
             new_timestamps[t] = ts + timestamps[t]
 
         return (new_timestamps, new_values)
+
+    def find_max(self, timestamp, metrics):
+        '''Given data as returned by pcparchive.get_values a timestamp and a set of metrics,
+        find the maximum value'''
+        # FIXME: when the user-specified time interval is large this method, places
+        # the arrows not too correctly
+        max_value = -sys.maxint
+        for metric in metrics:
+            for indom in self.all_data[metric]:
+                timestamps = self.all_data[metric][indom][0]
+                time_key = min(timestamps, key=lambda date: abs(timestamp - date))
+                time_index = timestamps.index(time_key)
+                value = self.all_data[metric][indom][1][time_index]
+                if value > max_value:
+                    max_value = value
+        return max_value
 
     def parse(self):
         '''Parses the archive and stores all the metrics in self.all_data. Returns a dictionary
@@ -390,6 +406,14 @@ class PcpStats(object):
             return False
         axes.grid(True)
 
+        # Draw self.labels if non empty
+        if len(self.labels) > 0:
+            for label in self.labels:
+                axes.annotate(label, xy=(mdates.date2num(self.labels[label]),
+                    self.find_max(self.labels[label], metrics)), xycoords='data',
+                    xytext=(30, 30), textcoords='offset points',
+                    arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"))
+        #
         # Add legend only when there is more than one instance
         lgd = False
         if indoms > 1:

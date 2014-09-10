@@ -19,6 +19,7 @@
 
 from __future__ import print_function
 
+from datetime import datetime
 import os
 import sys
 
@@ -43,6 +44,7 @@ class _Options(object):
         self.raw = False
         self.output_file = "output.pdf"
         self.interval = None
+        self.labels = {}
         self.opts = self.setup()
 
     def setup(self):
@@ -53,7 +55,7 @@ class _Options(object):
         opts = pmapi.pmOptions()
         opts.pmSetOptionCallback(self.option_callback)
         opts.pmSetOverrideCallback(self.override)
-        opts.pmSetShortOptions("rVi:e:o:c:?S:T:t:a:")
+        opts.pmSetShortOptions("rVi:e:o:c:?S:T:t:a:l:")
         opts.pmSetOptionFlags(c_api.PM_OPTFLAG_BOUNDARIES)
         opts.pmSetOptionFlags(c_api.PM_OPTFLAG_MULTI)
         opts.pmSetShortUsage("[options] -a <pcp_archive>\nFor example:\npcp2pdf -S \"May 30 12:00 2014\" -T \"May 30 15:00 2014\" -t \"1 minute\" -a tests/20140530.0")
@@ -77,6 +79,9 @@ class _Options(object):
         opts.pmSetLongOption("raw", 0, 'r', '', "Disable rate conversions")
         opts.pmSetLongOptionText(t + "Disable the rate conversion for all the metrics that have the PM_SEM_COUNTER semantic")
         opts.pmSetLongOptionText(t + "associated with them. By default those are converted via: (value(T) - value(T-1)) / (T - T-1)")
+        opts.pmSetLongOption("label", 0, 'l', '', "Adds one or more labels to a graph at specified time")
+        opts.pmSetLongOptionText(t + "For example --label 'foo:2014-01-01 13:45:03' --label 'bar:2014-01-02 13:15:15' will add")
+        opts.pmSetLongOptionText(t + "two extra labels on every graph at those times. This is useful for correlation work")
         opts.pmSetLongOptionStart()
         opts.pmSetLongOptionFinish()
         opts.pmSetLongOptionInterval()
@@ -107,6 +112,18 @@ class _Options(object):
             self.custom_graphs.append(optarg)
         elif opt == "i":
             self.include.append(optarg)
+        elif opt == "l":
+            try:
+                # labels are in the form "foo:2014-01-01 13:45:03"
+                # FIXME: I did not find any PCP python function to parse the time
+                # directly
+                label = optarg.split(':')[0]
+                time_str = "".join(optarg.split(':')[1:])
+                time = datetime.strptime(time_str, "%Y-%m-%d %H%M%S")
+                self.labels[label] = time
+            except:
+                print("Error parsing label: {0}".format(optarg))
+                sys.exit(1)
         elif opt == "a":
             self.input_file = optarg
         elif opt == "o":
@@ -134,7 +151,7 @@ if __name__ == '__main__':
     print("Parsing files: {0}".format(" ".join(map(os.path.basename, pcp_files))), end='')
     print()
 
-    # FIXME: make it work with multiple archive files
+    # FIXME: make it work and test it with multiple archive files
     pcpstats = PcpStats([pcp_files[0]], opts)
     pcpstats.output(output_file=opts.output_file)
 
