@@ -105,6 +105,7 @@ class PcpStats(object):
         self.pcparchive = PcpArchive(args, opts)
         self.raw = opts.raw
         self.labels = opts.labels
+        self.groupindom = opts.groupindom
         # Using /var/tmp as /tmp is ram-mounted these days
         self.tempdir = tempfile.mkdtemp(prefix='pcpstats', dir='/var/tmp')
         # This will contain all the metrics found in the archive file
@@ -320,7 +321,8 @@ class PcpStats(object):
                 if category == None and prefix != category:
                     category = prefix
                 elif category != None and prefix != category:
-                    raise Exception('Multiple categories in %s' % metrics)
+                    category = "Special"
+                    #raise Exception('Multiple categories in %s' % metrics)
             return category
         else:
             raise Exception('Cannot find category for %s' % metrics)
@@ -442,10 +444,78 @@ class PcpStats(object):
             print(summary)
         return True
 
+    def get_all_graphs(self):
+        '''Returns all the graphs that need to be plotted
+        Prepare the full list of graphs that will be drawn
+        Start with any custom graphs if they exist and
+        proceed with the remaining ones. Split the metrics
+        that have string values into a separate array
+        all_graphs = [(label, fname, (m0, m1, .., mN), text), ...]'''
+
+        all_graphs = []
+        string_metrics = []
+        for graph in self.custom_graphs:
+            (label, metrics) = graph
+            fname = self._graph_filename(label)
+            text = None
+            custom_metrics = []
+            for metric in metrics: # verify that the custom graph's metrics actually exist
+                if metric in self.all_data:
+                    custom_metrics.append(metric)
+
+            if len(custom_metrics) > 0:
+                if isinstance(metrics, str) and metrics in self.pcphelp.help_text:
+                    text = '<strong>%s</strong>: %s' % (metrics, self.pcphelp.help_text[metrics])
+                all_graphs.append((label, fname, custom_metrics, text))
+
+        for metric in sorted(self.all_data):
+            if self.is_string_metric(metric):
+                string_metrics.append(metric)
+            else:
+                fname = self._graph_filename([metric])
+                units_str = self.pcparchive.get_metric_info(metric)[4]
+                type_str = self.pcparchive.get_metric_info(metric)[5]
+                if isinstance(metric, str) and metric in self.pcphelp.help_text:
+                    help_text = self.pcphelp.help_text[metric]
+                else:
+                    help_text = '...'
+
+                text = '<strong>%s</strong>: %s (%s - %s)' % (metric, help_text, units_str, type_str)
+                if self.rate_converted[metric] != False:
+                    text = text + ' - <em>%s</em>' % 'rate converted'
+                all_graphs.append((metric, fname, [metric], text))
+
+        if self.groupindom:
+            indom_graphs = {}
+            for metric in sorted(self.all_data):
+                if self.is_string_metric(metric):
+                    continue
+                for indom in self.all_data[metric]:
+                    if indom == 0:
+                        continue
+                    if not indom in indom_graphs:
+                        indom_graphs[indom] = []
+                    else:
+                        indom_graphs[indom].append(metric)
+
+            print("Adding {0} indom graphs".format(len(indom_graphs)))
+            import hashlib
+            for indom in indom_graphs:
+                if len(indom_graphs[indom]) <= 1:
+                    continue
+                tmp = indom + "".join(indom_graphs[indom])
+                h = hashlib.new('sha1')
+                h.update(tmp)
+                fname = self._graph_filename(indom + h.hexdigest())
+                all_graphs.append((indom, fname, indom_graphs[indom], indom))
+
+        return (all_graphs, string_metrics)
+
     def output(self, output_file='output.pdf'):
+        # FIXME: Split this function in smaller pieces. This is unreadable
         sys.stdout.write('Parsing archive: ')
         sys.stdout.flush()
-        rate_converted = self.parse()
+        self.rate_converted = self.parse()
         print()
         doc = PcpDocTemplate(output_file, pagesize=landscape(A4))
         hostname = self.pcparchive.get_hostname()
@@ -465,44 +535,7 @@ class PcpStats(object):
         self.story.append(doc.toc)
         self.story.append(PageBreak())
 
-        # Prepare the full list of graphs that will be drawn
-        # Start with any custom graphs if they exist and
-        # proceed with the remaining ones. Split the metrics
-        # that have string values into a separate array
-        # all_graphs = [(label, fname, (m0, m1, .., mN), text), ...]
-        self.all_graphs = []
-        string_metrics = []
-        for graph in self.custom_graphs:
-            (label, metrics) = graph
-            fname = self._graph_filename(label)
-            text = None
-            custom_metrics = []
-            for metric in metrics: # verify that the custom graph's metrics actually exist
-                if metric in self.all_data:
-                    custom_metrics.append(metric)
-
-            if len(custom_metrics) > 0:
-                if isinstance(metrics, str) and metrics in self.pcphelp.help_text:
-                    text = '<strong>%s</strong>: %s' % (metrics, self.pcphelp.help_text[metrics])
-                self.all_graphs.append((label, fname, custom_metrics, text))
-
-        for metric in sorted(self.all_data):
-            if self.is_string_metric(metric):
-                string_metrics.append(metric)
-            else:
-                fname = self._graph_filename([metric])
-                units_str = self.pcparchive.get_metric_info(metric)[4]
-                type_str = self.pcparchive.get_metric_info(metric)[5]
-                if isinstance(metric, str) and metric in self.pcphelp.help_text:
-                    help_text = self.pcphelp.help_text[metric]
-                else:
-                    help_text = '...'
-
-                text = '<strong>%s</strong>: %s (%s - %s)' % (metric, help_text, units_str, type_str)
-                if rate_converted[metric] != False:
-                    text = text + ' - <em>%s</em>' % 'rate converted'
-                self.all_graphs.append((metric, fname, [metric], text))
-
+        (self.all_graphs, string_metrics) = self.get_all_graphs()
         done_metrics = []
         # This list contains the metrics that contained data
         print('Creating graphs: ', end='')

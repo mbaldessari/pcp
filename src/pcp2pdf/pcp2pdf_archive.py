@@ -42,6 +42,7 @@ class PcpHelp(object):
         try:
             self.context = pmapi.pmContext(target='local:')
         except:
+            print("Unable to contact local pmcd. Help text will be missing")
             return
         self.context.pmTraversePMNS('', self._pmns_callback)
         for metric in self.pmns:
