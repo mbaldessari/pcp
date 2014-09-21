@@ -18,6 +18,7 @@
 # MA 02110-1301, USA.
 
 from __future__ import print_function
+from __future__ import division
 from datetime import datetime
 from hashlib import sha1
 from itertools import repeat
@@ -39,6 +40,12 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.colors as colors
 import matplotlib.cm as cm
+from matplotlib.patches import Rectangle
+
+# When showing a rectangle when the interval is > than the average frequency we
+# first multiply by FREQUNCY ERROR in order to avoid spurious rectangles
+FREQUENCY_ERROR = 1.1
+
 #
 # To debug memory leaks
 USE_MELIAE = False
@@ -263,6 +270,51 @@ class PcpStats(object):
                     max_value = value
         return max_value
 
+    def find_data_gaps(self, data):
+        '''Returns a dictionary with tuples containing the start and end of the large intervals
+        as tuples. The value of the dictionary is a list of tuples where this interval has been
+        observed (metric, indom).
+        Returns: {(gap1start, gap1end): [(metric, indom), (metric2, indom2), ...],
+                  {gap2start, gap2end): [(metric, indom), (metric2, indom2), ...]}'''
+
+        # First we calculate the observed frequency (in seconds) of the observed measurements
+        total = 0.0
+        counter = 0
+        for metric in data:
+            for indom in data[metric]:
+                timestamps = data[metric][indom][0]
+                last = None
+                for time in timestamps:
+                    if not last:
+                        last = time
+                        continue
+                    delta = total_seconds(time - last)
+                    total += delta
+                    counter += 1
+                    last = time
+
+        frequency = total / counter
+
+        ret = {}
+        for metric in data:
+            for indom in data[metric]:
+                timestamps = data[metric][indom][0]
+                last = None
+                for time in timestamps:
+                    if not last:
+                        last = time
+                        continue
+                    delta = total_seconds(time - last)
+                    if delta > frequency * FREQUENCY_ERROR:
+                        key = (last, time)
+                        if key not in ret:
+                            ret[key] = [(metric, indom)]
+                        else:
+                            ret[key].append((metric, indom))
+                    last = time
+        return ret
+
+
     def parse(self):
         '''Parses the archive and stores all the metrics in self.all_data. Returns a dictionary
         containing the metrics which have been rate converted'''
@@ -406,6 +458,17 @@ class PcpStats(object):
 
         if not found:
             return False
+
+        # Show any data collection gaps in the graph
+        gaps = self.find_data_gaps(self.all_data).keys()
+        if len(gaps) > 0:
+            for i in gaps:
+                (g1, g2) = i
+                x1 = mdates.date2num(g1)
+                x2 = mdates.date2num(g2)
+                (ymin, ymax) = plt.ylim()
+                axes.add_patch(Rectangle((x1, ymin), x2 - x1, ymax-ymin, facecolor="lightgrey"))
+
         axes.grid(True)
 
         # Draw self.labels if non empty

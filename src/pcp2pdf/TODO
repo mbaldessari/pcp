@@ -11,11 +11,9 @@
   with the same name on the same page (although not sure how much sense
   that would make)
 
-- Override the -a argument and also allow a single file parameter?
+- Split in multitple pages when there are too many graphs
 
-- Automatically detect gaps in the PCP archive and mark them as such in the graph
-
-- Measure performance of parsing and creating pdf and jot down
+- Measure performance of parsing and creating pdf and  down
   the biggest time-consuming culprits. Consider CYTHON for some
   functions?
 
