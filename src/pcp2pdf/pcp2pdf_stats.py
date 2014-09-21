@@ -42,26 +42,25 @@ import matplotlib.colors as colors
 import matplotlib.cm as cm
 from matplotlib.patches import Rectangle
 
-# When showing a rectangle when the interval is > than the average frequency we
-# first multiply by FREQUNCY ERROR in order to avoid spurious rectangles
-FREQUENCY_ERROR = 1.1
-
-#
-# To debug memory leaks
-USE_MELIAE = False
-if USE_MELIAE:
-    from meliae import scanner, loader
-    import objgraph
-
 from pcp2pdf_style import PcpDocTemplate, tablestyle
 from pcp2pdf_archive import PcpArchive, PcpHelp
 import cpmapi as c_api
+
+# When showing a rectangle when the interval is > than the average frequency we
+# first multiply by FREQUNCY ERROR in order to avoid spurious rectangles
+FREQUENCY_ERROR = 1.1
 
 # If we should try and create the graphs in parallel
 # brings a nice speedup on multi-core/smp machines
 THREADED = True
 # None means all available CPUs
 NR_CPUS = None
+
+# To debug memory leaks
+USE_MELIAE = False
+if USE_MELIAE:
+    from meliae import scanner, loader
+    import objgraph
 
 # Inch graph size (width, height)
 GRAPH_SIZE = (10.5, 6.5)
