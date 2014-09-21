@@ -19,6 +19,7 @@
 
 from __future__ import print_function
 from __future__ import division
+import bisect
 from datetime import datetime
 from hashlib import sha1
 from itertools import repeat
@@ -255,18 +256,32 @@ class PcpStats(object):
 
     def find_max(self, timestamp, metrics):
         '''Given data as returned by pcparchive.get_values a timestamp and a set of metrics,
-        find the maximum value'''
-        # FIXME: when the user-specified time interval is large this method, places
-        # the arrows not too correctly
+        find the maximum y value. If the given timestamp does not exist in the data we
+        do a linear interpolation'''
         max_value = -sys.maxint
         for metric in metrics:
             for indom in self.all_data[metric]:
                 timestamps = self.all_data[metric][indom][0]
-                time_key = min(timestamps, key=lambda date: abs(timestamp - date))
-                time_index = timestamps.index(time_key)
-                value = self.all_data[metric][indom][1][time_index]
-                if value > max_value:
-                    max_value = value
+                y_values = self.all_data[metric][indom][1]
+                try:
+                    x = timestamps.index(timestamp)
+                    y = y_values[timestamp]
+                except ValueError:
+                    time_key_right = bisect.bisect_right(timestamps, timestamp)
+                    time_key_left = time_key_right - 1
+                    x1 = mdates.date2num(timestamps[time_key_left])
+                    x2 = mdates.date2num(timestamps[time_key_right])
+                    y1 = y_values[time_key_left]
+                    y2 = y_values[time_key_right]
+                    if x1 == x2 or y1 == y2: # No need to do any interpolation
+                        y = y1
+                    else:
+                        m = (y2 - y1) / (x2 - x1)
+                        x = mdates.date2num(timestamp) - x1
+                        y = m * x + y1
+
+                if y > max_value:
+                    max_value = y
         return max_value
 
     def find_data_gaps(self, data):

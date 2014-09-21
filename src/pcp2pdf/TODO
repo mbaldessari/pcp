@@ -20,10 +20,6 @@
 - Make sure it runs from the end install path as well (i.e. install the
   py modules in the proper place) i.e. Fix setup.py and test the packaging
 
-- Correlation labels don't work so well when interpolation is happening
-  (i.e. when the user specifies -t interval). Need a way to find the actual
-  y-value from the plot and not from raw data
-
 - Currently we need a running pmcd instance to try and fetch help text. 
   Is there a smarter way?
 
