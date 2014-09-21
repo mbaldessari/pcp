@@ -28,6 +28,68 @@ shift `expr $OPTIND - 1`
 tmp=/var/tmp/$$
 trap "rm -f $tmp.*; exit 0" 0 1 2 3 15
 
+# same function is in allow-pmlc-access ... need to track changes
+#
+_getnetworkaddr()
+{
+    if `which ifconfig >/dev/null 2>&1`
+    then
+	# expecting ifconfig lines like ...
+        # inet 192.168.1.222  netmask 255.255.255.0  broadcast 192.168.1.255
+	# inet addr:192.168.1.100  Bcast:192.168.1.255  Mask:255.255.255.0
+	#
+	# skip ip tunnels/vpns like
+	# inet addr:10.8.3.138  P-t-P:10.8.3.137  Mask:255.255.255.255
+	#
+	ifconfig \
+	| grep -v '[ :]127\.0\.0' \
+	| sed -n >$tmp.addr \
+	    -e '/^[ 	]*inet .*cast[ :]/{
+s/^[ 	]*inet[ 	]//
+s/^addr://
+s/[ 	][ 	]*broadcast[ 	][^ 	]*//
+s/:Bcast:[^ ]*//
+s/[ 	][ 	]*netmask[ 	]/ /
+s/[ 	][ 	]*Mask:/ /
+p
+}'
+	#debug# cat $tmp.addr >&2
+	num=`wc -l <$tmp.addr | sed -e 's/ //g'`
+	case "$num"
+	in
+	    1)	# good
+		addr=`cat $tmp.addr | sed -e 's/ .*//'`
+		mask=`cat $tmp.addr | sed -e 's/.* //'`
+		case "$mask"
+		in
+		    255.255.255.0)	# /24 network
+			echo "$addr" | sed -e 's/\.[0-9]*$/.*/'
+			;;
+		    # pmcd's [access] is not smart enough to handle other
+		    # than /24 networks, so map the other likely options
+		    # to the broader /24 network
+		    #
+		    255.255.255.128|255.255.255.192|255.255.255.224|255.255.255.240|255.255.255.248|255.255.255.252|255.255.255.254)
+			echo "$addr" | sed -e 's/\.[0-9]*$/.*/'
+			;;
+		    *)
+			echo >&2 "_getnetworkaddr: cannot handle network mask: $mask"
+			;;
+		esac
+		;;
+	    0)	# none?
+		echo >&2 "_getnetworkaddr: cannot get network address"
+		;;
+	    *)	# multiple?
+		echo >&2 "_getnetworkaddr: cannot handle multiple network addresss:"
+		cat >&2 $tmp.addr
+		;;
+	esac
+    else
+	echo >&2 '_getnetworkaddr: no ifconfig?'
+    fi
+}
+
 # add additional and optional directories
 for dir in /sbin /usr/sbin
 do
@@ -79,17 +141,17 @@ rpm?	rpmbuild		[rpm-build]
 # other build prerequisites
 dpkg?	/usr/share/doc/pkg-config	[pkg-config]
 dpkg?	/usr/share/doc/python-all-dev	[python-all-dev]
-dpkg?	/usr/include/microhttpd.h	[libmicrohttpd-dev]
-rpm?	/usr/include/microhttpd.h	[libmicrohttpd-devel]
-dpkg?	/usr/include/sasl/sasl.h	[libsasl2-dev]
-rpm?	/usr/include/sasl/sasl.h	[cyrus-sasl-devel]
-rpm?	/usr/include/systemd/sd-daemon.h	[systemd-devel but not for CentOS 5.8]
-dpkg?	/usr/include/infiniband/umad.h	[libibumad-dev]
-rpm?	/usr/include/infiniband/umad.h	[libibumad-devel]
-dpkg?	/usr/include/infiniband/mad.h	[libibmad-dev]
-rpm?	/usr/include/infiniband/mad.h	[libibmad-devel]
-dpkg?	/usr/include/avahi-common	[libavahi-common-dev]
-rpm?	/usr/include/avahi-common	[avahi-devel]
+dpkg?	/usr/include/microhttpd.h	[optional][libmicrohttpd-dev]
+rpm?	/usr/include/microhttpd.h	[optional][libmicrohttpd-devel]
+dpkg?	/usr/include/sasl/sasl.h	[optional][libsasl2-dev]
+rpm?	/usr/include/sasl/sasl.h	[optional][cyrus-sasl-devel]
+rpm?	/usr/include/systemd/sd-daemon.h	[optional][systemd-devel but not for CentOS 5.8]
+dpkg?	/usr/include/infiniband/umad.h	[optional][libibumad-dev]
+rpm?	/usr/include/infiniband/umad.h	[optional][libibumad-devel]
+dpkg?	/usr/include/infiniband/mad.h	[optional][libibmad-dev]
+rpm?	/usr/include/infiniband/mad.h	[optional][libibmad-devel]
+dpkg?	/usr/include/avahi-common	[optional][libavahi-common-dev]
+rpm?	/usr/include/avahi-common	[optional][avahi-devel]
 dpkg?	g++				[g++]
 rpm?	g++				[gcc-c++]
 # files
@@ -130,20 +192,21 @@ dpkg?	realpath		[realpath]
 dpkg?	qmake			[qt4-qmake]
 rpm?	qmake|qmake-qt4			[qt-devel]
 dpkg?	/usr/lib/libQtCore.so|/usr/lib/*/libQtCore.so	[libqt4-dev]
-dpkg?	/usr/lib/libSoQt4.so|/usr/lib/*/libSoQt4.so	[libsoqt4-dev]
-rpm?	/usr/lib/libQtCore.so|/usr/lib*/libQtCore.so	[qt-devel]
-dpkg?	/usr/include/Inventor/Qt/SoQt.h	[libsoqt-dev-common]
-dpkg?	/usr/include/Inventor/SoPath.h	[libcoin60-dev or libcoin80-dev]
+dpkg?	/usr/lib/libSoQt4.so|/usr/lib/*/libSoQt4.so	[optional][libsoqt4-dev]
+rpm?	/usr/lib/libQtCore.so|/usr/lib*/libQtCore.so	[optional][qt-devel]
+dpkg?	/usr/include/Inventor/Qt/SoQt.h	[optional][libsoqt-dev-common]
+dpkg?	/usr/include/Inventor/SoPath.h	[optional][libcoin60-dev or libcoin80-dev]
 # python
-rpm?	/usr/include/python*/Python.h		[python-devel]
-dpkg?	/usr/include/python*/Python.h		[python-dev]
+rpm?	/usr/include/python*/Python.h	[python-devel]
+dpkg?	/usr/include/python*/Python.h	[python-dev]
+rpm?	/usr/lib/python*/curses		[python-curses]
 # nss
-dpkg?	/usr/include/nspr/nspr.h	[libnspr4-dev]
-rpm?	/usr/include/nspr4/nspr.h	[nspr-devel]
-dpkg?	/usr/include/nss/nss.h		[libnss3-dev]
-rpm?	/usr/include/nss3/nss.h		[nss-devel]
-dpkg?	certutil			[libnss3-tools]
-rpm?	certutil			[nss-tools]
+dpkg?	/usr/include/nspr/nspr.h	[optional][libnspr4-dev]
+rpm?	/usr/include/nspr4/nspr.h	[optional][nspr-devel]
+dpkg?	/usr/include/nss/nss.h		[optional][libnss3-dev]
+rpm?	/usr/include/nss3/nss.h		[optional][nss-devel]
+dpkg?	certutil			[optional][libnss3-tools]
+rpm?	certutil			[optional][nss-tools or mozilla-nss-tools]
 End-of-File
 
 if which python >/dev/null 2>&1
@@ -343,18 +406,23 @@ if [ -f /etc/pcp.conf ]
 then
     . /etc/pcp.conf
 
-    # need QA access to pmlogger via pmlc
+    # need QA access to pmlogger via pmlc from local subnet
     #
-    if [ -f $PCP_SYSCONF_DIR/pmlogger/config.default ]
+    network=`_getnetworkaddr`
+    if [ -n "$network" ]
     then
-	if grep -q 'allow 192\.168\.1\.\*' $PCP_SYSCONF_DIR/pmlogger/config.default
+	if [ -f $PCP_SYSCONF_DIR/pmlogger/config.default ]
 	then
-	    :
+	    if grep -q "allow $network" $PCP_SYSCONF_DIR/pmlogger/config.default
+	    then
+		:
+	    else
+		echo "Missing: \"allow $network : all;\" [access] in $PCP_SYSCONF_DIR/pmlogger/config.default"
+		echo "Use \"$ sudo .../qa/admin/allow-pmlc-access\" to fix this."
+	    fi
 	else
-	    echo "Missing: \"allow 192.168.1.* : all;\" [access] in $PCP_SYSCONF_DIR/pmlogger/config.default"
+	    echo "Warning: \"$PCP_SYSCONF_DIR/pcp/pmlogger/config.default\" is missing"
 	fi
-    else
-	echo "Warning: \"$PCP_SYSCONF_DIR/pcp/pmlogger/config.default\" is missing"
     fi
 else
     echo "Warning: \"/etc/pcp.conf\" is missing"

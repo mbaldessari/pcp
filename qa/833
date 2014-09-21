@@ -19,7 +19,14 @@ _filter()
 {
     # free pdubuf[size]: 0xe61000[28672] 0xe5c000[17408]
     sed \
-	-e '/free pdubuf/s/0x[0-9a-f]*\[[0-9]*\]/addr[size]/g'
+	-e '/free pdubuf/s/0x[0-9a-f]*\[[0-9]*\]/addr[size]/g' \
+    | $PCP_AWK_PROG '
+/free pdubuf/	{ if (NF <= 9) {
+		    print "   free pdubuf[size]: ... <= 7 buffers ..."
+		    next
+		  }
+		}
+		{ print }'
 }
 
 status=1	# failure is the default!
@@ -28,11 +35,11 @@ trap "cd $here; rm -rf $tmp.*; exit \$status" 0 1 2 3 15
 
 # real QA test starts here
 echo "=== pmNewContext ==="
-src/churnctx -z -s 100 -a src/bug1057 kernel.all.load hinv.ncpu disk.dev.total 2>&1 | _filter
+src/churnctx -z -s 400 -a src/bug1057 kernel.all.load hinv.ncpu disk.dev.total 2>&1 | _filter
 
 echo
 echo "=== pmDupContext ==="
-src/churnctx -d -z -s 100 -a src/bug1057 kernel.all.load hinv.ncpu disk.dev.total 2>&1 | _filter
+src/churnctx -d -z -s 400 -a src/bug1057 kernel.all.load hinv.ncpu disk.dev.total 2>&1 | _filter
 
 echo
 echo "=== host context, and pmNewContext ... just to be sure ==="
