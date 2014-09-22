@@ -284,13 +284,7 @@ class PcpStats(object):
                     max_value = y
         return max_value
 
-    def find_data_gaps(self, data):
-        '''Returns a dictionary with tuples containing the start and end of the large intervals
-        as tuples. The value of the dictionary is a list of tuples where this interval has been
-        observed (metric, indom).
-        Returns: {(gap1start, gap1end): [(metric, indom), (metric2, indom2), ...],
-                  {gap2start, gap2end): [(metric, indom), (metric2, indom2), ...]}'''
-
+    def get_frequency(self, data):
         # First we calculate the observed frequency (in seconds) of the observed measurements
         total = 0.0
         counter = 0
@@ -308,7 +302,16 @@ class PcpStats(object):
                     last = time
 
         frequency = total / counter
+        return frequency
 
+    def find_data_gaps(self, data):
+        '''Returns a dictionary with tuples containing the start and end of the large intervals
+        as tuples. The value of the dictionary is a list of tuples where this interval has been
+        observed (metric, indom).
+        Returns: {(gap1start, gap1end): [(metric, indom), (metric2, indom2), ...],
+                  {gap2start, gap2end): [(metric, indom), (metric2, indom2), ...]}'''
+
+        frequency = self.get_frequency(data)
         ret = {}
         for metric in data:
             for indom in data[metric]:
