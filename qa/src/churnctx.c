@@ -369,8 +369,10 @@ Options:\n\
 	/* check for outrageous memory leaks */
 	check = (char *)sbrk(0);
 	if (highwater != NULL) {
-	    if (check - highwater > 4096) {
-		printf("Memory growth (iteration %d): %ld\n", iter, (long)(check - highwater));
+	    if (check - highwater > 512*1024) {
+		/* use first 2 iterations to get stable */
+		if (iter > 2)
+		    printf("Memory growth (iteration %d): %ld\n", iter, (long)(check - highwater));
 		highwater = check;
 	    }
 	}
@@ -386,12 +388,7 @@ Options:\n\
 		    exit(1);
 		}
 	    }
-	    appStart.tv_sec += delta.tv_sec;
-	    appStart.tv_usec += delta.tv_usec;
-	    if (appStart.tv_usec > 1000000) {
-		appStart.tv_usec -= 1000000;
-		appStart.tv_sec++;
-	    }
+	    __pmtimevalInc(&appStart, &delta);
 	}
 
 	if (nmetric > 0) {
