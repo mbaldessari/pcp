@@ -11,19 +11,14 @@
   with the same name on the same page (although not sure how much sense
   that would make)
 
-- Override the -a argument and also allow a single file parameter?
+- Split in multitple pages when there are too many graphs
 
-- Automatically detect gaps in the PCP archive and mark them as such in the graph
-
-- Measure performance of parsing and creating pdf and jot down
+- Measure performance of parsing and creating pdf and  down
   the biggest time-consuming culprits. Consider CYTHON for some
   functions?
 
 - Make sure it runs from the end install path as well (i.e. install the
   py modules in the proper place) i.e. Fix setup.py and test the packaging
-
-- Correlation labels don't work so well when interpolation is happening
-  (i.e. when the user specifies -t interval)
 
 - Currently we need a running pmcd instance to try and fetch help text. 
   Is there a smarter way?
@@ -38,12 +33,6 @@
 - Verify that all the maths in rate conversion are always correct
 
 - In the progress bar add a % of completion (we know start_time and end_time, so it should be easy)
-
-- Like sarstats make it multiprocess for faster processing ? The archive
-  parsing could be done by splitting the whole time interval by the nr of
-  the CPUs and each could have an archive reading process.
-  The graph creation part is done. We could also parallelize the parsing
-  of the archive by having a context per process chewing on intervals split by CPU.
 
 - Run the code through pylint and pyflake
 
