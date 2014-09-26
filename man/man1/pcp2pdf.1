@@ -27,6 +27,7 @@
 [\f3\-T\f1 \f2finish time\f1]
 [\f3\-t\f1 \f2time interval\f1]
 [\f3\-l\f1 \f2custom label\f1]
+[\f3\-m\f1 \f2max indoms\f1]
 \f3\-a\f1 \f2archive\f1
 .SH DESCRIPTION
 .B pcp2pdf
@@ -125,7 +126,16 @@ for the accepted
 formats
 .TP
 .BI "\-t|\-\-interval " delta
-Sets the sampling interval
+Sets the sampling interval. See
+.BR PCPIntro (1)
+for the accepted
+.I time
+interval formats
+.TP
+.BI "\-m|\-\-maxindoms " maximum_indoms
+Splits a graph of metrics that has more than
+.I maximum_indoms
+number of indoms into multiple pages
 .TP
 .BI "\-a|\-\-archive " file
 Sets the PCP archive name to be parsed

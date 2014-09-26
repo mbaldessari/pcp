@@ -86,6 +86,11 @@ def progress_callback(graph_added):
         sys.stdout.write('-')
     sys.stdout.flush()
 
+def split_chunks(list_to_split, chunksize): 
+    """Split the list l in chunks of at most n in size""" 
+    return [list_to_split[i:i+chunksize] for i in range(0, len(list_to_split), chunksize)] 
+
+
 def graph_wrapper((pcparch_obj, data)):
     """This is a wrapper due to pool.map() single argument limit"""
     (label, fname, metrics, text) = data
@@ -335,6 +340,7 @@ class PcpStats(object):
     def parse(self):
         '''Parses the archive and stores all the metrics in self.all_data. Returns a dictionary
         containing the metrics which have been rate converted'''
+
         (all_data, self.skipped_graphs) = self.pcparchive.get_values(progress=progress_callback)
         print(' total of {0} graphs'.format(len(all_data)), end='')
         if len(self.skipped_graphs) > 0:
@@ -427,6 +433,7 @@ class PcpStats(object):
         found = False
         indoms = 0
         counter = 0
+
         # First we calculate the maximum number of colors needed
         max_values_len = 0
         for metric in metrics:
@@ -549,6 +556,11 @@ class PcpStats(object):
                 all_graphs.append((label, fname, custom_metrics, text))
 
         for metric in sorted(self.all_data):
+            # Make sure that we plot only the metrics that the
+            # user has specified
+            if not metric in self.metrics:
+                continue
+
             if self.is_string_metric(metric):
                 string_metrics.append(metric)
             else:
@@ -568,7 +580,8 @@ class PcpStats(object):
         if self.groupindom:
             indom_graphs = {}
             for metric in sorted(self.all_data):
-                if self.is_string_metric(metric):
+                if self.is_string_metric(metric) and \
+                        not metric in self.metrics:
                     continue
                 for indom in self.all_data[metric]:
                     if indom == 0:

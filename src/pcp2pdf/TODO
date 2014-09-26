@@ -26,10 +26,17 @@
   that would make)
 
 - Split in multitple pages when there are too many graphs
+  To fix this get_all_graphs() needs to be rewritten. Now it returns
+  all_graphs = [(label, fname, (m0, m1, .., mN), text), ...]
+  Need to add the indoms as well so that we can have something like the
+  following:
+  all_graphs = [(label, fname, {m0:[i0,i1,i2], m0:[i3,i4,i5],
+                                m1:[i0,i1,i2], m1:[i3,i4,i5], ...mN), text), ...]
+
+  After that whoever calls the create_graph() function can do a proper job and 
+  draw the poper number of indoms
 
 - Make sure custom graphs have their own subtree in the pdf navigation tree
-
-- Implement and test exclude option
 
 - Measure performance of parsing and creating pdf and  down
   the biggest time-consuming culprits. Consider CYTHON for some
@@ -50,7 +57,8 @@
 
 - Add a default set of custom graphs that are always automatically included
 
-- Verify that all the maths in rate conversion are always correct
+- Verify that all the maths in rate conversion are always correct. Or is there
+  a way to disable the rate conversion or do it automatically via PCP libs
 
 - In the progress bar add a % of completion (we know start_time and end_time, so it should be easy)
 
