@@ -1,3 +1,17 @@
+- If a custom label is added in a graph which has holes in the data collection
+  we get an error:
+  Creating graphs: Traceback (most recent call last):
+    File "./pcp2pdf", line 161, in <module>
+      pcpstats.output(output_file=opts.output_file)
+    File "/home/michele/Devel/pcp/src/pcp2pdf/pcp2pdf_stats.py", line 631, in output
+      if self.create_graph(fname, label, metrics):
+    File "/home/michele/Devel/pcp/src/pcp2pdf/pcp2pdf_stats.py", line 495, in create_graph
+      self.find_max(self.labels[label], metrics)), xycoords='data',
+    File "/home/michele/Devel/pcp/src/pcp2pdf/pcp2pdf_stats.py", line 273, in find_max
+      x2 = mdates.date2num(timestamps[time_key_right])
+  IndexError: list index out of range
+  Example: /pcp2pdf --output skipped.pdf  -t "4 minute"  -l 'foo:2014-05-30 16:30:00' -a skipped.0 
+
 - Cluster together within a table all the metrics that share an indom
   so either a table that shows all the metrics shared by the same indom.
   Like: eth0: network.interface.in.bytes, network.interface.mtu, ...
@@ -13,9 +27,15 @@
 
 - Split in multitple pages when there are too many graphs
 
+- Make sure custom graphs have their own subtree in the pdf navigation tree
+
+- Implement and test exclude option
+
 - Measure performance of parsing and creating pdf and  down
   the biggest time-consuming culprits. Consider CYTHON for some
   functions?
+  The ideal solution would be an api that implements the PcpArchive.get_values()
+  straight in C and return a dictionary with all the values
 
 - Make sure it runs from the end install path as well (i.e. install the
   py modules in the proper place) i.e. Fix setup.py and test the packaging
@@ -54,5 +74,3 @@
   When that work is tackled, it may simplify the mode you have here
   (planned?) where it scans a directory for pcp archives.
   [Michele] This needs revisiting when this code appears upstream
-
-- Write MAN page
