@@ -179,10 +179,6 @@ class PcpStats(object):
                 print("Cannot use label {0}. It is an existing metric".format(label))
                 sys.exit(-1)
             metrics = metrics_str.split(',')
-            for metric in metrics:
-                if metric not in self.metrics:
-                    print("Metric '{0}' is not in the available metrics".format(metric))
-                    sys.exit(-1)
             self.custom_graphs.append((label, metrics))
 
         try: # Not all matplotlib versions have this key
