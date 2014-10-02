@@ -179,7 +179,7 @@ class PcpStats(object):
                 print("Cannot use label {0}. It is an existing metric".format(label))
                 sys.exit(-1)
             metrics = metrics_str.split(',')
-            self.custom_graphs.append((label, metrics))
+            self.custom_graphs.append(("custom.%s" % label, metrics))
 
         try: # Not all matplotlib versions have this key
             matplotlib.rcParams['figure.max_open_warning'] = 100
@@ -269,6 +269,10 @@ class PcpStats(object):
                     y = y_values[timestamp]
                 except ValueError:
                     time_key_right = bisect.bisect_right(timestamps, timestamp)
+                    # If the custom label's timestamp falls outside the
+                    # data we have we skip this
+                    if time_key_right >= len(timestamps):
+                        continue
                     time_key_left = time_key_right - 1
                     x1 = mdates.date2num(timestamps[time_key_left])
                     x2 = mdates.date2num(timestamps[time_key_right])
@@ -381,11 +385,15 @@ class PcpStats(object):
 
         return rate_converted
 
-    def get_category(self, metrics):
+    def get_category(self, label, metrics):
         '''Return the category given one or a list of metric strings'''
         if isinstance(metrics, str):
+            if label.startswith('custom'):
+                return 'custom'
             return metrics.split('.')[0]
         elif isinstance(metrics, list):
+            if label.startswith('custom'):
+                return 'custom'
             category = None
             for metric in metrics:
                 prefix = metric.split('.')[0]
@@ -494,11 +502,14 @@ class PcpStats(object):
         # Draw self.labels if non empty
         if len(self.labels) > 0:
             for label in self.labels:
+                max_value = self.find_max(self.labels[label], metrics)
+                # should we not find a max_value at all (due to empty timestamps)
+                if max_value == -sys.maxint:
+                    max_value = 0
                 axes.annotate(label, xy=(mdates.date2num(self.labels[label]),
-                    self.find_max(self.labels[label], metrics)), xycoords='data',
-                    xytext=(30, 30), textcoords='offset points',
+                    max_value), xycoords='data', xytext=(30, 30), textcoords='offset points',
                     arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"))
-        #
+
         # Add legend only when there is more than one instance
         lgd = False
         if indoms > 1:
@@ -573,6 +584,7 @@ class PcpStats(object):
                     text = text + ' - <em>%s</em>' % 'rate converted'
                 all_graphs.append((metric, fname, [metric], text))
 
+        # FIXME: this sucks ass currently
         if self.groupindom:
             indom_graphs = {}
             for metric in sorted(self.all_data):
@@ -673,7 +685,7 @@ class PcpStats(object):
         last_category = ''
         for graph in done_metrics:
             (label, fname, metrics, text) = graph
-            category = self.get_category(metrics)
+            category = self.get_category(label, metrics)
             if last_category != category:
                 self._do_heading(category, doc.h1)
                 last_category = category

@@ -148,7 +148,6 @@ class PcpArchive(object):
 
         data = {}
         self.context.pmSetMode(c_api.PM_MODE_FORW, self.start, 0)
-        self.context.pmFetchArchive()
         if self.interval:
             self.context.pmSetMode(c_api.PM_MODE_INTERP | c_api.PM_XTB_SET(c_api.PM_TIME_SEC), self.start,
                 self.interval)
