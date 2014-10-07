@@ -23,6 +23,7 @@ import sys
 from pcp import pmapi
 import cpmapi as c_api
 
+
 class PcpHelp(object):
     '''Help texts are not shipped in an archive file. This class is used
     to fetch the help texts from the locally running pmcd service. This
@@ -48,10 +49,11 @@ class PcpHelp(object):
         for metric in self.pmns:
             try:
                 pmid = self.context.pmLookupName(metric)
-                text = self.context.pmLookupText(pmid[0], kind = c_api.PM_TEXT_HELP)
+                text = self.context.pmLookupText(pmid[0], kind=c_api.PM_TEXT_HELP)
                 self.help_text[metric] = text
             except:
                 pass
+
 
 class PcpArchive(object):
     '''Class to make it easy to extract data from a PCP archive'''
@@ -81,7 +83,8 @@ class PcpArchive(object):
         pmid = self.context.pmLookupName(label)
         desc = self.context.pmLookupDesc(pmid[0])
         self.pmns[label] = (desc.type, desc.sem, desc.contents.units, desc.contents.type,
-                self.context.pmUnitsStr(desc.contents.units), self.context.pmTypeStr(desc.contents.type))
+                            self.context.pmUnitsStr(desc.contents.units),
+                            self.context.pmTypeStr(desc.contents.type))
 
     def _extract_value(self, result, desc, i, inst=0):
         '''Return python value given a pmExtractValue set of parameters'''
@@ -150,7 +153,7 @@ class PcpArchive(object):
         self.context.pmSetMode(c_api.PM_MODE_FORW, self.start, 0)
         if self.interval:
             self.context.pmSetMode(c_api.PM_MODE_INTERP | c_api.PM_XTB_SET(c_api.PM_TIME_SEC), self.start,
-                self.interval)
+                                   self.interval)
 
         skipped_metrics = []
         # This is just used as an optimization. The keys are (numpmid, numinst) and the value is
@@ -189,9 +192,9 @@ class PcpArchive(object):
                 if metric not in data:
                     data[metric] = {}
                 count = result.contents.get_numval(i)
-                if count == 0: # FIXME: double-check this (no instance whatsoever)
-                    continue 
-                elif count == 1: # No indoms are present
+                if count == 0:  # FIXME: double-check this (no instance whatsoever)
+                    continue
+                elif count == 1:  # No indoms are present
                     try:
                         value = self._extract_value(result, desc, i)
                     except pmapi.pmErr, error:
@@ -200,7 +203,7 @@ class PcpArchive(object):
                             continue
                         raise error
                     if 0 not in data[metric]:
-                        data[metric][0] = [[ts,], [value,]]
+                        data[metric][0] = [[ts, ], [value, ]]
                     else:
                         data[metric][0][0].append(ts)
                         data[metric][0][1].append(value)
@@ -220,7 +223,7 @@ class PcpArchive(object):
                     else:
                         indom = indom_map[(i, j)]
                     if indom not in data[metric]:
-                        data[metric][indom] = [[ts,], [value,]]
+                        data[metric][indom] = [[ts, ], [value, ]]
                     else:
                         data[metric][indom][0].append(ts)
                         data[metric][indom][1].append(value)

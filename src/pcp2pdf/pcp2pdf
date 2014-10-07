@@ -28,10 +28,10 @@ from pcp2pdf_stats import PcpStats
 from pcp import pmapi
 
 VERSION = '0.1'
-
 default_custom_graphs = [
-        'proc.runq:proc.runq.blocked,proc.runq.defunct,proc.runq.runnable,proc.runq.sleeping',
+    'proc.runq:proc.runq.blocked,proc.runq.defunct,proc.runq.runnable,proc.runq.sleeping',
     ]
+
 
 class _Options(object):
     def __init__(self):
@@ -78,7 +78,7 @@ class _Options(object):
         opts.pmSetLongOptionText(t + "Add ability to create graphs with multiple metrics. For example:")
         opts.pmSetLongOptionText(t + "--custom 'foo:network.tcp.outrsts,network.tcp.ofoqueue' would create a")
         opts.pmSetLongOptionText(t + "'foo' page with the two metrics combined in a single graph. The general syntax is:")
-        opts.pmSetLongOptionText(t + "--custom '<label>:<metric1>,...<metricN>'. The option can be specified multiple times") 
+        opts.pmSetLongOptionText(t + "--custom '<label>:<metric1>,...<metricN>'. The option can be specified multiple times")
         opts.pmSetLongOption("raw", 0, 'r', '', "Disable rate conversions")
         opts.pmSetLongOptionText(t + "Disable the rate conversion for all the metrics that have the PM_SEM_COUNTER semantic")
         opts.pmSetLongOptionText(t + "associated with them. By default those are converted via: (value(T) - value(T-1)) / (T - T-1)")
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     pcp_files = opts.opts.pmGetOptionArchives()
-    if pcp_files == None:
+    if pcp_files is None:
         print("Error: No pcp archives specified")
         c_api.pmUsageMessage()
         sys.exit(1)
