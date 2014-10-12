@@ -67,6 +67,7 @@ X_AXIS = ('Time', 12, '%m-%d %H:%M', 20)
 # of the page
 LEGEND_THRESHOLD = 50
 
+
 def ellipsize(text, limit=100):
     '''Truncates a string in a nice-formatted way'''
     ret = text[:limit].rsplit(' ', 1)[0]
@@ -102,6 +103,7 @@ def print_mem_usage(data):
 # Python 2.6 does not have total_seconds() in datetime objects
 def total_seconds(timedelta):
     return timedelta.days * 3600 * 24 + timedelta.seconds + timedelta.microseconds / 100000.0
+
 
 class PcpStats(object):
     story = []
