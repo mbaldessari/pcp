@@ -19,10 +19,6 @@
 - Marko mentioned that other tools expect the archive name without the ending number
   i.e. -a ./20141002
 
-- Marko mentioned it hangs on RHEL6 with THREADED=yes
-  Either I pinpoint the problematic package (python, matplotlib, xcb) or
-  we disable THREADED when using python2.6?
-
 - Add events support so that we have an automatic marker when an event is present
   in an archive
 
