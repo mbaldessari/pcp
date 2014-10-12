@@ -51,18 +51,13 @@ import cpmapi as c_api
 # first multiply by FREQUNCY ERROR in order to avoid spurious rectangles
 FREQUENCY_ERROR = 1.1
 
-# If we should try and create the graphs in parallel
-# brings a nice speedup on multi-core/smp machines
-THREADED = True
-# None means all available CPUs
-NR_CPUS = None
-
 # To debug memory leaks
 USE_MELIAE = False
 if USE_MELIAE:
     from meliae import scanner, loader
     import objgraph
 
+# FIXME: these two need to be moved to pcp2pdf_style
 # Inch graph size (width, height)
 GRAPH_SIZE = (10.5, 6.5)
 # Axis (title, fontsize, dateformat, locator in min)
@@ -118,6 +113,7 @@ class PcpStats(object):
         self.raw = opts.raw
         self.labels = opts.labels
         self.groupindom = opts.groupindom
+        self.threaded = opts.threaded
         # Using /var/tmp as /tmp is ram-mounted these days
         self.tempdir = tempfile.mkdtemp(prefix='pcpstats', dir='/var/tmp')
         # This will contain all the metrics found in the archive file
@@ -640,8 +636,8 @@ class PcpStats(object):
         done_metrics = []
         # This list contains the metrics that contained data
         print('Creating graphs: ', end='')
-        if THREADED:
-            pool = multiprocessing.Pool(NR_CPUS)
+        if self.threaded:
+            pool = multiprocessing.Pool(None)
             l = zip(repeat(self), self.all_graphs)
             metrics_rets = pool.map(graph_wrapper, l)
             (metrics, rets) = zip(*metrics_rets)

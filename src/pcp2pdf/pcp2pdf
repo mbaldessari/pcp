@@ -32,6 +32,14 @@ default_custom_graphs = [
     'proc.runq:proc.runq.blocked,proc.runq.defunct,proc.runq.runnable,proc.runq.sleeping',
     ]
 
+# Using multiprocess with matplotlib seems to be problematic
+# on RHEL 5 and 6. For now we simply do not run multiple processes
+# in that case
+def run_threaded():
+    info = sys.version_info
+    if info[0] == 2 and info[1] <= 6:
+        return False
+    return True
 
 class _Options(object):
     def __init__(self):
@@ -48,6 +56,7 @@ class _Options(object):
         self.groupindom = False
         self.maxindoms = 32
         self.opts = self.setup()
+        self.threaded = run_threaded()
 
     def setup(self):
         """ Setup default command line argument option handling """
