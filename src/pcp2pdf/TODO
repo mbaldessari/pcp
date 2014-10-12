@@ -10,6 +10,11 @@
   We could also add a switch --group-by-instance and put all the instances
   with the same name on the same page (although not sure how much sense
   that would make)
+  One solution to this is to add the possibility to specify an indom and
+  metrics in the --custom graph option. Something like:
+  --custom "foo:*[eth0]" which would create graph called "foo" with any metrics
+  that have an indom called 'eth0'. This could be extended to also use regexes like
+  --custom "bar:network.*[eth*]"
 
 - Marko mentioned that other tools expect the archive name without the ending number
   i.e. -a ./20141002
@@ -17,6 +22,9 @@
 - Marko mentioned it hangs on RHEL6 with THREADED=yes
   Either I pinpoint the problematic package (python, matplotlib, xcb) or
   we disable THREADED when using python2.6?
+
+- Add events support so that we have an automatic marker when an event is present
+  in an archive
 
 - Split in multitple pages when there are too many graphs
   To fix this get_all_graphs() needs to be rewritten. Now it returns
