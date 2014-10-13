@@ -169,15 +169,36 @@ class PcpStats(object):
         # Verify if there are any custom graphs
         for graph in opts.custom_graphs:
             try:
-                (label, metrics_str) = graph.split(':')
+                (label, metrics_str, indom_str) = graph.split(':')
             except:
                 print("Failed to parse: {0}".format(i))
                 sys.exit(-1)
             if label in self.metrics:
                 print("Cannot use label {0}. It is an existing metric".format(label))
                 sys.exit(-1)
-            metrics = metrics_str.split(',')
-            self.custom_graphs.append(("custom.%s" % label, metrics))
+            # We need to parse custom graphs like the following:
+            # "foo:network.interface.out.bytes,network.interface.in.bytes:eth[1,2]"
+            # Syntax: label:metric_regex1,metrix_regex2...:indom_regex1,indom_regex2,...
+            try:
+                metrics = metrics_str.split(',')
+                indom_re = indom_str.split(',')
+            except:
+                print("Unable ti parse: {0} - {1}".format(metrics_str, indom_str))
+                sys.exit(-1)
+
+            all_metrics = sorted(self.pcparchive.get_metrics())
+            matched = []
+            for metric in metrics:
+                try:
+                    matched.extend(filter(lambda x: re.match(metric, x), all_metrics))
+                except:
+                    print("Failed to parse: {0}".format(metric))
+                    sys.exit(-1)
+
+            # We expanded all the metrics here. We cannot do the same for indoms as those
+            # are not yet available. We just pass the regexes and do it at custom
+            # graph creation time
+            self.custom_graphs.append(("custom.%s" % label, metrics, indom_re))
 
         try: # Not all matplotlib versions have this key
             matplotlib.rcParams['figure.max_open_warning'] = 100

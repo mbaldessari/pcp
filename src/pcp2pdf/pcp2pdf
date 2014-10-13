@@ -57,6 +57,8 @@ class _Options(object):
         self.maxindoms = 32
         self.opts = self.setup()
         self.threaded = run_threaded()
+        if not self.threaded:
+            print("Old python version detected. Disabling multi-threaded processing")
 
     def setup(self):
         """ Setup default command line argument option handling """

@@ -12,12 +12,18 @@
   that would make)
   One solution to this is to add the possibility to specify an indom and
   metrics in the --custom graph option. Something like:
-  --custom "foo:*[eth0]" which would create graph called "foo" with any metrics
+  --custom "foo:*:eth0" which would create graph called "foo" with any metrics
   that have an indom called 'eth0'. This could be extended to also use regexes like
-  --custom "bar:network.*[eth*]"
+  --custom "bar:network.*:eth*". With the general syntax being:
+  "label:metric_regex:indom_regex"
+
+  More complex example "foo:network.interface.out.bytes,network.interface.in.bytes:eth[1,2]"
 
 - Marko mentioned that other tools expect the archive name without the ending number
   i.e. -a ./20141002
+
+- Make sure that when using --custom and --exclude '*' we only draw the custom
+  graphs
 
 - Add events support so that we have an automatic marker when an event is present
   in an archive
