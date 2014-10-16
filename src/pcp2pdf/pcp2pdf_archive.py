@@ -66,9 +66,13 @@ class PcpArchive(object):
     def __init__(self, pcp_fname, opts):
         '''Opens a PCP archive and does an initial walk of the PMNS tree'''
         self.pcparchive = pcp_fname
-        self.context = pmapi.pmContext.fromOptions(opts.opts, sys.argv)
-        self.context.pmTraversePMNS('', self._pmns_callback)
+        try:
+            self.context = pmapi.pmContext.fromOptions(opts.opts, sys.argv)
+        except pmapi.pmErr:
+            print("No such file: {0}".format(pcp_fname))
+            sys.exit(-1)
 
+        self.context.pmTraversePMNS('', self._pmns_callback)
         self.start = opts.opts.pmGetOptionStart()
         self.end = opts.opts.pmGetOptionFinish()
         self.interval = opts.opts.pmGetOptionInterval()

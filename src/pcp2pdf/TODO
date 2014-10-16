@@ -1,8 +1,6 @@
-- Marko mentioned that other tools expect the archive name without the ending number
-  i.e. -a ./20141002
-
-- Make sure that when using --custom and --exclude '*' we only draw the custom
-  graphs
+- When choosing a complex custom graph the colors are not as diverse as they should
+  because the number of colors is calculated without filtering out metrics and indoms
+  that won't end up in the graph
 
 - Add events support so that we have an automatic marker when an event is present
   in an archive
@@ -30,7 +28,8 @@
   the biggest time-consuming culprits. Consider CYTHON for some
   functions?
   The ideal solution would be an api that implements the PcpArchive.get_values()
-  straight in C and return a dictionary with all the values
+  straight in C and return a dictionary with all the values, because
+  currently most of the time is spent in conversions
 
 - Make sure it runs from the end install path as well (i.e. install the
   py modules in the proper place) i.e. Fix setup.py and test the packaging
@@ -55,8 +54,6 @@
 
 - Have the possibility to use a config file to customize how the pdf looks
 
-- Test it with ex4 archives
-  
 - Add on ex4 the monitoring and collection of per process data and
   test a pdf creation with that
 
