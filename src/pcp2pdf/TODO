@@ -1,7 +1,3 @@
-- When choosing a complex custom graph the colors are not as diverse as they should
-  because the number of colors is calculated without filtering out metrics and indoms
-  that won't end up in the graph
-
 - Add events support so that we have an automatic marker when an event is present
   in an archive
 

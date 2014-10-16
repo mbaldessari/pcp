@@ -492,8 +492,14 @@ class PcpStats(object):
         max_values_len = 0
         for metric in metrics:
             values = self.all_data[metric]
-            if len(values) > max_values_len:
-                max_values_len = len(values)
+            count = 0
+            for indom in values:
+                if indomres is not None and metric in indomres:
+                    if match_res(indomres[metric], indom) is None:
+                        continue
+                count += 1
+            if count > max_values_len:
+                max_values_len = count
 
         # We need at most number of max(indoms) * metrics colors
         vmax_color = max_values_len * len(metrics)
