@@ -83,11 +83,12 @@ Output file name (default:
 .TP
 .BI "\-c|\-\-custom " custom_graphs
 Add custom graphs with multiple metrics. For example:
-.I \-\-custom 'foo:network.tcp.outrsts,network.tcp.ofoqueue'
-will create a 'foo' page with the two metrics combined in a
+.I \-\-custom 'traffic:network.tcp.outrsts:.*,network.tcp.ofoqueue.*,network.interfaces.out.*:eth[0-9]'
+will create a 'traffic' page with the each matched metric and the corresponding matched indom
 single graph. The general syntax is the following:
-.I \-\-custom '<label>:<metric1>,...<metricN>'
-The option can be specified multiple times.
+.I \-\-custom '<label>:<metric1_regex>:<indom1_regex>,...<metricN_regex>:<indomN_regex>'
+The option can be specified multiple times. This makes it easy to try and correlate metrics that normally
+would not appear on the same graph.
 .TP
 .BI "\-r|\-\-raw"
 Disable the rate conversion for all the metrics that have the

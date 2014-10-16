@@ -1,24 +1,3 @@
-- Cluster together within a table all the metrics that share an indom
-  so either a table that shows all the metrics shared by the same indom.
-  Like: eth0: network.interface.in.bytes, network.interface.mtu, ...
-  Need to see how other tools con do it (given the staticness of pdf)
-  and related:
-  How to visualize stuff with a truckload of instances like the case
-  when we collect proc.* with the proc pmda
-  When there are a bunch of instances (> X) we could automatically split the
-  pages, and still allowing the user to specify the threshold.
-  We could also add a switch --group-by-instance and put all the instances
-  with the same name on the same page (although not sure how much sense
-  that would make)
-  One solution to this is to add the possibility to specify an indom and
-  metrics in the --custom graph option. Something like:
-  --custom "foo:*:eth0" which would create graph called "foo" with any metrics
-  that have an indom called 'eth0'. This could be extended to also use regexes like
-  --custom "bar:network.*:eth*". With the general syntax being:
-  "label:metric_regex:indom_regex"
-
-  More complex example "foo:network.interface.out.bytes,network.interface.in.bytes:eth[1,2]"
-
 - Marko mentioned that other tools expect the archive name without the ending number
   i.e. -a ./20141002
 

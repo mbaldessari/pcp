@@ -86,19 +86,29 @@ def split_chunks(list_to_split, chunksize):
     """Split the list l in chunks of at most n in size""" 
     return [list_to_split[i:i+chunksize] for i in range(0, len(list_to_split), chunksize)] 
 
-
 def graph_wrapper((pcparch_obj, data)):
     """This is a wrapper due to pool.map() single argument limit"""
-    (label, fname, metrics, text) = data
-    ret = pcparch_obj.create_graph(fname, label, metrics)
+    (label, fname, metrics, text, indomres) = data
+    ret = pcparch_obj.create_graph(fname, label, metrics, indomres)
     progress_callback(ret)
-    return ((label, fname, metrics, text), ret)
+    return ((label, fname, metrics, text, indomres), ret)
 
 def print_mem_usage(data):
     usage = resource.getrusage(resource.RUSAGE_SELF)
     print("Graphing: {0} usertime={1} systime={2} mem={3} MB"
         .format(data, usage[0], usage[1],
         (usage[2] / 1024.0)))
+
+def match_res(patterns, string, flags=0):
+    if type(string) != str:
+        string = str(string)
+    for pattern in patterns:
+        ret = re.match(pattern, string, flags)
+        # FIXME remove this
+        #print("Pattern: {0} - String: {1} --> {2}".format(pattern, string, ret))
+        if ret is not None:
+            return ret
+    return None
 
 # Python 2.6 does not have total_seconds() in datetime objects
 def total_seconds(timedelta):
@@ -114,7 +124,6 @@ class PcpStats(object):
         self.pcparchive = PcpArchive(args, opts)
         self.raw = opts.raw
         self.labels = opts.labels
-        self.groupindom = opts.groupindom
         self.threaded = opts.threaded
         # Using /var/tmp as /tmp is ram-mounted these days
         self.tempdir = tempfile.mkdtemp(prefix='pcpstats', dir='/var/tmp')
@@ -166,39 +175,61 @@ class PcpStats(object):
             self.metrics = delta_metrics
 
         self.custom_graphs = []
-        # Verify if there are any custom graphs
+        # Verify if there are any custom graphs. The can be defined like this:
+        # "traffic:network.interface.out.bytes:eth0,network.interface.in.bytes:virbr[0-9]*,network.tcp..*:.*"
         for graph in opts.custom_graphs:
             try:
-                (label, metrics_str, indom_str) = graph.split(':')
+                x = graph.find(':')
+                label = graph[0:x]
+                line = graph[x + 1:]
+                elements = line.split(',')
             except:
-                print("Failed to parse: {0}".format(i))
+                print("Failed to parse label: {0}".format(graph))
                 sys.exit(-1)
+
             if label in self.metrics:
                 print("Cannot use label {0}. It is an existing metric".format(label))
                 sys.exit(-1)
-            # We need to parse custom graphs like the following:
-            # "foo:network.interface.out.bytes,network.interface.in.bytes:eth[1,2]"
-            # Syntax: label:metric_regex1,metrix_regex2...:indom_regex1,indom_regex2,...
-            try:
-                metrics = metrics_str.split(',')
-                indom_re = indom_str.split(',')
-            except:
-                print("Unable ti parse: {0} - {1}".format(metrics_str, indom_str))
-                sys.exit(-1)
 
             all_metrics = sorted(self.pcparchive.get_metrics())
-            matched = []
-            for metric in metrics:
+            indomres = {}
+            metrics = []
+            for element in elements:
                 try:
-                    matched.extend(filter(lambda x: re.match(metric, x), all_metrics))
+                    (metric_str, indom_str) = element.split(':')
                 except:
-                    print("Failed to parse: {0}".format(metric))
+                    print("Failed to parse: {0}".format(element))
                     sys.exit(-1)
+                try:
+                    tmp_metrics = filter(lambda x: re.match(metric_str, x), all_metrics)
+                    metrics.extend(tmp_metrics)
+                except:
+                    print("Failed to parse: {0}".format(metric_str))
+                    sys.exit(-1)
+                for metric in tmp_metrics:
+                    if metric in indomres:
+                        indomres[metric].append(indom_str)
+                    else:
+                        indomres[metric] = [indom_str]
+
+            # Try to compile the indom_res to make sure they are valid
+            errors = []
+            for pattern in indomres:
+                try:
+                    re.compile(pattern)
+                except:
+                    errors.append(pattern)
+                    pass
+
+            if len(errors) > 0:
+                print("Invalid regular expressions: {0}".format(
+                    " ".join(errors)))
+                sys.exit(-1)
 
             # We expanded all the metrics here. We cannot do the same for indoms as those
             # are not yet available. We just pass the regexes and do it at custom
             # graph creation time
-            self.custom_graphs.append(("custom.%s" % label, metrics, indom_re))
+            self.custom_graphs.append(("custom.%s" % label, metrics, indomres))
 
         try: # Not all matplotlib versions have this key
             matplotlib.rcParams['figure.max_open_warning'] = 100
@@ -436,9 +467,9 @@ class PcpStats(object):
                 break
         return isstring
 
-    def create_graph(self, fname, title, metrics):
-        '''Take a title and a list of metrics and creates an image of
-        the graph'''
+    def create_graph(self, fname, title, metrics, indomres):
+        '''Take a filename, a title, a list of metrics and an indom_regex to
+        create an image of the graph'''
         fig = plt.figure(figsize=(GRAPH_SIZE[0], GRAPH_SIZE[1]))
         axes = fig.add_subplot(111)
         # Set X Axis metadata
@@ -474,6 +505,11 @@ class PcpStats(object):
         for metric in metrics:
             values = self.all_data[metric]
             for indom in sorted(values):
+                # If the indomres is not None we use the indom only if the re string
+                # matches
+                if indomres is not None and metric in indomres:
+                    if match_res(indomres[metric], indom) is None:
+                        continue
                 (timestamps, dataset) = values[indom]
                 # Currently if there is only one (timestamp,value) like with filesys.blocksize
                 # we just do not graph the thing
@@ -567,8 +603,10 @@ class PcpStats(object):
 
         all_graphs = []
         string_metrics = []
+        indom_res = []
+
         for graph in self.custom_graphs:
-            (label, metrics) = graph
+            (label, metrics, indom_res) = graph
             fname = self._graph_filename(label)
             text = None
             custom_metrics = []
@@ -579,7 +617,7 @@ class PcpStats(object):
             if len(custom_metrics) > 0:
                 if isinstance(metrics, str) and metrics in self.pcphelp.help_text:
                     text = '<strong>%s</strong>: %s' % (metrics, self.pcphelp.help_text[metrics])
-                all_graphs.append((label, fname, custom_metrics, text))
+                all_graphs.append((label, fname, custom_metrics, text, indom_res))
 
         for metric in sorted(self.all_data):
             # Make sure that we plot only the metrics that the
@@ -601,33 +639,7 @@ class PcpStats(object):
                 text = '<strong>%s</strong>: %s (%s - %s)' % (metric, help_text, units_str, type_str)
                 if self.rate_converted[metric] != False:
                     text = text + ' - <em>%s</em>' % 'rate converted'
-                all_graphs.append((metric, fname, [metric], text))
-
-        # FIXME: this sucks ass currently
-        if self.groupindom:
-            indom_graphs = {}
-            for metric in sorted(self.all_data):
-                if self.is_string_metric(metric) and \
-                        not metric in self.metrics:
-                    continue
-                for indom in self.all_data[metric]:
-                    if indom == 0:
-                        continue
-                    if not indom in indom_graphs:
-                        indom_graphs[indom] = []
-                    else:
-                        indom_graphs[indom].append(metric)
-
-            print("Adding {0} indom graphs".format(len(indom_graphs)))
-            import hashlib
-            for indom in indom_graphs:
-                if len(indom_graphs[indom]) <= 1:
-                    continue
-                tmp = indom + "".join(indom_graphs[indom])
-                h = hashlib.new('sha1')
-                h.update(tmp)
-                fname = self._graph_filename(indom + h.hexdigest())
-                all_graphs.append((indom, fname, indom_graphs[indom], indom))
+                all_graphs.append((metric, fname, [metric], text, None))
 
         return (all_graphs, string_metrics)
 
@@ -667,8 +679,8 @@ class PcpStats(object):
             done_metrics = [metric for (metric, ret) in metrics_rets if ret]
         else:
             for graph in self.all_graphs:
-                (label, fname, metrics, text) = graph
-                if self.create_graph(fname, label, metrics):
+                (label, fname, metrics, text, indomres) = graph
+                if self.create_graph(fname, label, metrics, indomres):
                     progress_callback(True)
                     done_metrics.append(graph)
                 else:
@@ -703,7 +715,7 @@ class PcpStats(object):
         # Add the graphs to the pdf
         last_category = ''
         for graph in done_metrics:
-            (label, fname, metrics, text) = graph
+            (label, fname, metrics, text, indom_res) = graph
             category = self.get_category(label, metrics)
             if last_category != category:
                 self._do_heading(category, doc.h1)
