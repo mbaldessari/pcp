@@ -88,7 +88,8 @@ will create a 'traffic' page with the each matched metric and the corresponding 
 single graph. The general syntax is the following:
 .I \-\-custom '<label>:<metric1_regex>:<indom1_regex>,...<metricN_regex>:<indomN_regex>'
 The option can be specified multiple times. This makes it easy to try and correlate metrics that normally
-would not appear on the same graph.
+would not appear on the same graph. The different metrics' values need to be in similar scales or the
+graph will be not too useful.
 .TP
 .BI "\-r|\-\-raw"
 Disable the rate conversion for all the metrics that have the
