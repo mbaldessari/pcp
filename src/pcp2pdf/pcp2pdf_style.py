@@ -59,8 +59,6 @@ class PcpDocTemplate(BaseDocTemplate):
                 textColor=cfgparser.get(section, "textColor")
                 )
 
-        print(self.fonts)
-
         self.toc = TableOfContents()
         # FIXME: TOC styles not customizable yet
         self.toc.levelStyles = [

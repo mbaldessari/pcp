@@ -670,8 +670,8 @@ class PcpStats(object):
             (self.pcparchive.interval), doc.fonts["mono"]))
         self.story.append(Spacer(1, 0.10 * inch))
 
-        self._do_heading('Table of contents', doc.fonts["centered_index"])
-        self.story.append(doc.toc)
+        #self._do_heading('Table of contents', doc.fonts["centered_index"])
+        #self.story.append(doc.toc)
         self.story.append(PageBreak())
 
         (self.all_graphs, string_metrics) = self.get_all_graphs()
