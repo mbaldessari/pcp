@@ -20,90 +20,49 @@ from reportlab.lib.styles import ParagraphStyle as PS
 from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
 from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.platypus.frames import Frame
-from reportlab.lib.units import inch
-import reportlab.lib.colors
-
-tablestyle = [('GRID', (0, 0), (-1, -1), 1, reportlab.lib.colors.black),
-              ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-              ('LEFTPADDING', (0, 0), (-1, -1), 3),
-              ('RIGHTPADDING', (0, 0), (-1, -1), 3),
-              ('FONTSIZE', (0, 0), (-1, -1), 10),
-              ('FONTNAME', (0, 0), (-1, 0), 'Times-Bold'), ]
+from reportlab.lib.colors import toColor
 
 
 class PcpDocTemplate(BaseDocTemplate):
     """Custom Doc Template in order to have bookmarks
     for certain type of text"""
-    def __init__(self, filename, **kw):
+    def __init__(self, filename, cfgparser, **kw):
         self.allowSplitting = 0
+        self.tablestyle = [
+            ('GRID', (0, 0), (-1, -1), 1, toColor(cfgparser.get("string_table", "color"))),
+            ('ALIGN', (0, 0), (-1, -1), cfgparser.get("string_table", "align")),
+            ('LEFTPADDING', (0, 0), (-1, -1), int(cfgparser.get("string_table", "leftpadding"))),
+            ('RIGHTPADDING', (0, 0), (-1, -1), int(cfgparser.get("string_table", "rightpadding"))),
+            ('FONTSIZE', (0, 0), (-1, -1), int(cfgparser.get("string_table", "fontsize"))),
+            ('FONTNAME', (0, 0), (-1, 0), cfgparser.get("string_table", "font")), ]
         apply(BaseDocTemplate.__init__, (self, filename), kw)
-        template = PageTemplate('normal', [Frame(0.1*inch, 0.1*inch,
-                                11*inch, 8*inch, id='F1')])
+        template = PageTemplate('normal', [Frame(
+            float(cfgparser.get("page", "x1")),
+            float(cfgparser.get("page", "y1")),
+            float(cfgparser.get("page", "width")),
+            float(cfgparser.get("page", "height")), id='F1')])
         self.addPageTemplates(template)
 
-        self.centered = PS(
-            name='centered',
-            fontSize=30,
-            leading=16,
-            alignment=1,
-            spaceAfter=20)
+        font_list = ["centered", "centered_index", "small_centered", "heading1",
+                     "heading2", "heading2_centered", "heading2_invisible", "mono",
+                     "mono_centered", "normal"]
+        self.fonts = {}
+        for font in font_list:
+            section = "font_%s" % font
+            self.fonts[font] = PS(
+                name=font,
+                fontName=cfgparser.get(section, "fontname"),
+                fontSize=int(cfgparser.get(section, "fontsize")),
+                leading=int(cfgparser.get(section, "leading")),
+                alignment=int(cfgparser.get(section, "alignment")),
+                spaceAfter=int(cfgparser.get(section, "spaceafter")),
+                textColor=cfgparser.get(section, "textColor")
+                )
 
-        self.centered_index = PS(
-            name='centered_index',
-            fontSize=24,
-            leading=16,
-            alignment=1,
-            spaceAfter=20)
-
-        self.small_centered = PS(
-            name='small_centered',
-            fontSize=14,
-            leading=16,
-            alignment=1,
-            spaceAfter=20)
-
-        self.h1 = PS(
-            name='Heading1',
-            fontSize=16,
-            leading=16)
-
-        self.h2 = PS(
-            name='Heading2',
-            fontSize=14,
-            leading=14)
-
-        self.h2_center = PS(
-            name='Heading2Center',
-            alignment=1,
-            fontSize=14,
-            leading=14)
-
-        self.h2_invisible = PS(
-            name='Heading2Invisible',
-            alignment=1,
-            textColor='#FFFFFF',
-            fontSize=14,
-            leading=14)
-
-        self.mono_centered = PS(
-            name='Mono',
-            alignment=1,
-            fontName='Courier',
-            fontSize=16,
-            leading=16)
-
-        self.mono = PS(
-            name='Mono',
-            fontName='Courier',
-            fontSize=16,
-            leading=16)
-
-        self.normal = PS(
-            name='Normal',
-            fontSize=16,
-            leading=16)
+        print(self.fonts)
 
         self.toc = TableOfContents()
+        # FIXME: TOC styles not customizable yet
         self.toc.levelStyles = [
             PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
                 leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
@@ -116,9 +75,10 @@ class PcpDocTemplate(BaseDocTemplate):
         if flowable.__class__.__name__ == 'Paragraph':
             text = flowable.getPlainText()
             style = flowable.style.name
-            if style in ['Heading1', 'centered_index']:
+            if style in ["heading1", "centered_index"]:
                 level = 0
-            elif style in ['Heading2', 'Heading2Center', 'Heading2Invisible']:
+            elif style in ["heading2", "heading2_centered",
+                           "heading2_invisible"]:
                 level = 1
             else:
                 return

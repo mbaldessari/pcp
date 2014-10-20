@@ -19,15 +19,20 @@
 
 from __future__ import print_function
 
+import ConfigParser
 from datetime import datetime
 import os
+import os.path
 import sys
 
 import cpmapi as c_api
 from pcp2pdf_stats import PcpStats
 from pcp import pmapi
 
+NAME = "pcp2pdf"
 VERSION = '0.1'
+
+# FIXME: do this properly
 default_custom_graphs = [
     'proc.runq:proc.runq.blocked,proc.runq.defunct,proc.runq.runnable,proc.runq.sleeping',
     ]
@@ -58,6 +63,16 @@ class _Options(object):
         self.threaded = run_threaded()
         if not self.threaded:
             print("Old python version detected. Disabling multi-threaded processing")
+        configfiles = []
+        configfiles.append(os.path.join(pmapi.pmContext.pmGetConfig('PCP_SYSCONF_DIR'),
+                                        NAME, NAME + ".conf"))
+        configfiles.append(os.path.join(os.path.expanduser("~"), ".config", NAME, NAME + ".conf"))
+        configfiles.append(os.path.join(os.getcwd(), NAME + ".conf"))
+        self.configparser = ConfigParser.SafeConfigParser()
+        ret = self.configparser.read(configfiles)
+        if len(ret) == 0:
+            print("No configuration files found: {0}".format(configfiles))
+            sys.exit(-1)
 
     def setup(self):
         """ Setup default command line argument option handling """

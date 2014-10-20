@@ -43,7 +43,7 @@ import matplotlib.colors as colors
 import matplotlib.cm as cm
 from matplotlib.patches import Rectangle
 
-from pcp2pdf_style import PcpDocTemplate, tablestyle
+from pcp2pdf_style import PcpDocTemplate
 from pcp2pdf_archive import PcpArchive, PcpHelp
 import cpmapi as c_api
 
@@ -125,6 +125,7 @@ class PcpStats(object):
         self.raw = opts.raw
         self.labels = opts.labels
         self.threaded = opts.threaded
+        self.configparser = opts.configparser
         # Using /var/tmp as /tmp is ram-mounted these days
         self.tempdir = tempfile.mkdtemp(prefix='pcpstats', dir='/var/tmp')
         # This will contain all the metrics found in the archive file
@@ -655,21 +656,21 @@ class PcpStats(object):
         sys.stdout.flush()
         self.rate_converted = self.parse()
         print()
-        doc = PcpDocTemplate(output_file, pagesize=landscape(A4))
+        doc = PcpDocTemplate(output_file, self.configparser, pagesize=landscape(A4))
         hostname = self.pcparchive.get_hostname()
-        self.story.append(Paragraph('%s' % hostname, doc.centered))
+        self.story.append(Paragraph('%s' % hostname, doc.fonts["centered"]))
         self.story.append(Spacer(1, 0.10 * inch))
         self.story.append(Paragraph('PCP Archives: %s' % (" ".join(self.args)),
-                          doc.mono))
+                          doc.fonts["mono"]))
 
         self.story.append(Paragraph('Start: %s - End: %s' %
             (datetime.fromtimestamp(self.pcparchive.start),
-            datetime.fromtimestamp(self.pcparchive.end)), doc.mono))
+            datetime.fromtimestamp(self.pcparchive.end)), doc.fonts["mono"]))
         self.story.append(Paragraph('Interval: %s seconds' %
-            (self.pcparchive.interval), doc.mono))
+            (self.pcparchive.interval), doc.fonts["mono"]))
         self.story.append(Spacer(1, 0.10 * inch))
 
-        self._do_heading('Table of contents', doc.centered_index)
+        self._do_heading('Table of contents', doc.fonts["centered_index"])
         self.story.append(doc.toc)
         self.story.append(PageBreak())
 
@@ -709,10 +710,10 @@ class PcpStats(object):
                         last_value = v
 
         if len(data) > 1:
-            self._do_heading('String metrics', doc.h1)
+            self._do_heading('String metrics', doc.fonts["heading1"])
             self.story.append(Spacer(1, 0.2 * inch))
             table = Table(data)
-            table.setStyle(tablestyle)
+            table.setStyle(doc.tablestyle)
             self.story.append(table)
             self.story.append(PageBreak())
 
@@ -724,14 +725,14 @@ class PcpStats(object):
             (label, fname, metrics, text, indom_res) = graph
             category = self.get_category(label, metrics)
             if last_category != category:
-                self._do_heading(category, doc.h1)
+                self._do_heading(category, doc.fonts["heading1"])
                 last_category = category
 
-            self._do_heading(label, doc.h2_invisible)
+            self._do_heading(label, doc.fonts["heading2_invisible"])
             self.story.append(Image(fname, width=GRAPH_SIZE[0]*inch,
                               height=GRAPH_SIZE[1]*inch))
             if text:
-                self.story.append(Paragraph(text, doc.normal))
+                self.story.append(Paragraph(text, doc.fonts["normal"]))
             self.story.append(PageBreak())
             sys.stdout.write('.')
             sys.stdout.flush()
