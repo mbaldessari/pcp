@@ -20,7 +20,7 @@ from reportlab.lib.styles import ParagraphStyle as PS
 from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
 from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.platypus.frames import Frame
-from reportlab.lib.colors import toColor
+from reportlab.lib import colors
 
 
 class PcpDocTemplate(BaseDocTemplate):
@@ -29,7 +29,8 @@ class PcpDocTemplate(BaseDocTemplate):
     def __init__(self, filename, cfgparser, **kw):
         self.allowSplitting = 0
         self.tablestyle = [
-            ('GRID', (0, 0), (-1, -1), 1, toColor(cfgparser.get("string_table", "color"))),
+            ('ROWBACKGROUNDS', (0,0), (-1,-1), (colors.lightgrey, colors.white)),
+            ('GRID', (0, 0), (-1, -1), 1, colors.toColor(cfgparser.get("string_table", "color"))),
             ('ALIGN', (0, 0), (-1, -1), cfgparser.get("string_table", "align")),
             ('LEFTPADDING', (0, 0), (-1, -1), int(cfgparser.get("string_table", "leftpadding"))),
             ('RIGHTPADDING', (0, 0), (-1, -1), int(cfgparser.get("string_table", "rightpadding"))),

@@ -658,7 +658,10 @@ class PcpStats(object):
         print()
         doc = PcpDocTemplate(output_file, self.configparser, pagesize=landscape(A4))
         hostname = self.pcparchive.get_hostname()
-        self.story.append(Paragraph('%s' % hostname, doc.fonts["centered"]))
+        self._do_heading('%s' % hostname, doc.fonts["centered_index"])
+        self.story.append(Spacer(1, 0.10 * inch))
+        self.story.append(Image('pcplogo.png'))
+        #self.story.append(Paragraph('%s' % hostname, doc.fonts["centered"]))
         self.story.append(Spacer(1, 0.10 * inch))
         self.story.append(Paragraph('PCP Archives: %s' % (" ".join(self.args)),
                           doc.fonts["mono"]))
@@ -712,7 +715,8 @@ class PcpStats(object):
         if len(data) > 1:
             self._do_heading('String metrics', doc.fonts["heading1"])
             self.story.append(Spacer(1, 0.2 * inch))
-            table = Table(data)
+            width = doc.pagesize[0]
+            table = Table(data, colWidths=(0.15 * width, 0.2 * width, 0.6 * width))
             table.setStyle(doc.tablestyle)
             self.story.append(table)
             self.story.append(PageBreak())
