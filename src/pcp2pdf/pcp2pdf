@@ -69,6 +69,8 @@ class _Options(object):
         configfiles.append(os.path.join(os.path.expanduser("~"), ".config", NAME, NAME + ".conf"))
         configfiles.append(os.path.join(os.getcwd(), NAME + ".conf"))
         self.configparser = ConfigParser.SafeConfigParser()
+        # Make sure the items are not lower-cased
+        self.configparser.optionxform = str
         ret = self.configparser.read(configfiles)
         if len(ret) == 0:
             print("No configuration files found: {0}".format(configfiles))

@@ -1,3 +1,10 @@
+- Right now we use a fairly big DPI in order to make the images a bit higher quality
+  This takes more time and consumes a lot more memory. Is there no better way?
+
+- Rename all the fonts sections/names to proper sensible names
+
+- Document the config file in the manpage
+
 - Split all the style properties in some default rc file. Ship a default one in /etc/pcp/pcp2pdfstylerc
   and let overrides happen in ~/.config/pcp2pdfstylerc
 

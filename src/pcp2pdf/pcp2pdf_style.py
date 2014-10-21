@@ -16,11 +16,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.styles import ParagraphStyle as PS
 from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
 from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.platypus.frames import Frame
-from reportlab.lib import colors
 
 
 class PcpDocTemplate(BaseDocTemplate):
@@ -32,9 +33,9 @@ class PcpDocTemplate(BaseDocTemplate):
             ('ROWBACKGROUNDS', (0,0), (-1,-1), (colors.lightgrey, colors.white)),
             ('GRID', (0, 0), (-1, -1), 1, colors.toColor(cfgparser.get("string_table", "color"))),
             ('ALIGN', (0, 0), (-1, -1), cfgparser.get("string_table", "align")),
-            ('LEFTPADDING', (0, 0), (-1, -1), int(cfgparser.get("string_table", "leftpadding"))),
-            ('RIGHTPADDING', (0, 0), (-1, -1), int(cfgparser.get("string_table", "rightpadding"))),
-            ('FONTSIZE', (0, 0), (-1, -1), int(cfgparser.get("string_table", "fontsize"))),
+            ('LEFTPADDING', (0, 0), (-1, -1), int(cfgparser.get("string_table", "leftPadding"))),
+            ('RIGHTPADDING', (0, 0), (-1, -1), int(cfgparser.get("string_table", "rightPadding"))),
+            ('FONTSIZE', (0, 0), (-1, -1), int(cfgparser.get("string_table", "fontSize"))),
             ('FONTNAME', (0, 0), (-1, 0), cfgparser.get("string_table", "font")), ]
         apply(BaseDocTemplate.__init__, (self, filename), kw)
         template = PageTemplate('normal', [Frame(
@@ -47,24 +48,37 @@ class PcpDocTemplate(BaseDocTemplate):
         font_list = ["centered", "centered_index", "small_centered", "heading1",
                      "heading2", "heading2_centered", "heading2_invisible", "mono",
                      "mono_centered", "normal"]
+        int_fields = ["fontSize", "leading", "alignment", "spaceAfter"]
         self.fonts = {}
         for font in font_list:
+            sheet = getSampleStyleSheet()
+            text = sheet['BodyText']
             section = "font_%s" % font
-            self.fonts[font] = PS(
-                name=font,
-                fontName=cfgparser.get(section, "fontname"),
-                fontSize=int(cfgparser.get(section, "fontsize")),
-                leading=int(cfgparser.get(section, "leading")),
-                alignment=int(cfgparser.get(section, "alignment")),
-                spaceAfter=int(cfgparser.get(section, "spaceafter")),
-                textColor=cfgparser.get(section, "textColor")
-                )
+            print("{0} -> {1}".format(section, cfgparser.items(section)))
+            items = dict(cfgparser.items(section))
+            for i in int_fields:
+                if i in items:
+                    items[i] = int(items[i])
+
+            tmp_ps = PS(font, parent=text)
+            tmp_ps.__dict__.update(items)
+            self.fonts[font] = tmp_ps
+            print(items)
+            print(PS(items))
 
         self.toc = TableOfContents()
         # FIXME: TOC styles not customizable yet
+        d = { 'fontName': 'Times-Bold',
+              'fontSize': 14,
+              'name': 'TOCHeading1',
+              'leftIndent':20,
+              'fitsLineIndent':-20,
+              'spaceBefore':2,
+              'leading':16 }
         self.toc.levelStyles = [
-            PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
-                leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
+            PS(d),
+            #PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
+            #    leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
             PS(fontSize=10, name='TOCHeading2', leftIndent=40,
                 firstLineIndent=-20, spaceBefore=0, leading=8),
         ]

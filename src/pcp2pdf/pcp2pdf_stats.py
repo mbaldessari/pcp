@@ -27,7 +27,7 @@ import multiprocessing
 import os
 import re
 import resource
-import shutil
+#import shutil
 import sys
 import tempfile
 
@@ -57,6 +57,11 @@ if USE_MELIAE:
     from meliae import scanner, loader
     import objgraph
 
+# DPI used to create matplotimages. It's fairly high
+# in order for the graph to be crisp and clear
+# The higher, the more RAM is needed when creating
+# the pdf
+DPI = 200
 # FIXME: these two need to be moved to pcp2pdf_style
 # Inch graph size (width, height)
 GRAPH_SIZE = (10.5, 6.5)
@@ -243,7 +248,7 @@ class PcpStats(object):
         # because the underlying imaging lib bails out on a few graphs from
         # time to time
         pyver = sys.version_info
-        if pyver[0] == 2 and pyver[1] == 6:
+        if pyver[0] == 2 and pyver[1] <= 6:
             extension = '.jpg'
         if isinstance(metrics, list):
             temp = ''
@@ -439,21 +444,20 @@ class PcpStats(object):
     def get_category(self, label, metrics):
         '''Return the category given one or a list of metric strings'''
         if isinstance(metrics, str):
-            if label.startswith('custom'):
-                return 'custom'
+            if label.startswith('Custom'):
+                return 'Custom'
             return metrics.split('.')[0]
         elif isinstance(metrics, list):
-            if label.startswith('custom'):
-                return 'custom'
+            if label.startswith('Custom'):
+                return 'Custom'
             category = None
             for metric in metrics:
                 prefix = metric.split('.')[0]
                 if category == None and prefix != category:
                     category = prefix
                 elif category != None and prefix != category:
-                    category = "Special"
-                    #raise Exception('Multiple categories in %s' % metrics)
-            return category
+                    raise Exception('Multiple categories in %s' % metrics)
+            return category.title()
         else:
             raise Exception('Cannot find category for %s' % metrics)
 
@@ -471,6 +475,7 @@ class PcpStats(object):
     def create_graph(self, fname, title, metrics, indomres):
         '''Take a filename, a title, a list of metrics and an indom_regex to
         create an image of the graph'''
+        # reportlab has a 72 dpi by default
         fig = plt.figure(figsize=(GRAPH_SIZE[0], GRAPH_SIZE[1]))
         axes = fig.add_subplot(111)
         # Set X Axis metadata
@@ -585,9 +590,9 @@ class PcpStats(object):
                 lgd = axes.legend(loc=1, ncol=int(indoms**0.5), shadow=True, prop=fontproperties)
 
         if lgd:
-            plt.savefig(fname, bbox_extra_artists=(lgd,), bbox_inches='tight')
+            plt.savefig(fname, bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=DPI)
         else:
-            plt.savefig(fname, bbox_inches='tight')
+            plt.savefig(fname, bbox_inches='tight', dpi=DPI)
         plt.cla()
         plt.clf()
         plt.close('all')
@@ -713,7 +718,7 @@ class PcpStats(object):
                         last_value = v
 
         if len(data) > 1:
-            self._do_heading('String metrics', doc.fonts["heading1"])
+            self._do_heading('String Metrics', doc.fonts["heading1"])
             self.story.append(Spacer(1, 0.2 * inch))
             width = doc.pagesize[0]
             table = Table(data, colWidths=(0.15 * width, 0.2 * width, 0.6 * width))
@@ -744,7 +749,8 @@ class PcpStats(object):
         doc.multiBuild(self.story)
         print()
         print("Done building: {0}".format(output_file))
-        shutil.rmtree(self.tempdir)
+        #FIXME
+        #shutil.rmtree(self.tempdir)
         print("Done removing: {0}".format(self.tempdir))
 
     def print_info(self):
