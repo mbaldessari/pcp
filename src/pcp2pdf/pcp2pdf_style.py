@@ -20,7 +20,6 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.styles import ParagraphStyle as PS
 from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
-from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.platypus.frames import Frame
 
 
@@ -45,16 +44,16 @@ class PcpDocTemplate(BaseDocTemplate):
             float(cfgparser.get("page", "height")), id='F1')])
         self.addPageTemplates(template)
 
-        font_list = ["centered", "centered_index", "small_centered", "heading1",
-                     "heading2", "heading2_centered", "heading2_invisible", "mono",
-                     "mono_centered", "normal"]
+        font_list = ["centered", "centered_index", "small_centered",
+                "heading1", "heading1_centered", "heading1_invisible",
+                "heading2", "heading2_centered", "heading2_invisible",
+                "mono", "mono_centered", "normal", "front_title"]
         int_fields = ["fontSize", "leading", "alignment", "spaceAfter"]
         self.fonts = {}
         for font in font_list:
             sheet = getSampleStyleSheet()
             text = sheet['BodyText']
             section = "font_%s" % font
-            print("{0} -> {1}".format(section, cfgparser.items(section)))
             items = dict(cfgparser.items(section))
             for i in int_fields:
                 if i in items:
@@ -63,35 +62,15 @@ class PcpDocTemplate(BaseDocTemplate):
             tmp_ps = PS(font, parent=text)
             tmp_ps.__dict__.update(items)
             self.fonts[font] = tmp_ps
-            print(items)
-            print(PS(items))
-
-        self.toc = TableOfContents()
-        # FIXME: TOC styles not customizable yet
-        d = { 'fontName': 'Times-Bold',
-              'fontSize': 14,
-              'name': 'TOCHeading1',
-              'leftIndent':20,
-              'fitsLineIndent':-20,
-              'spaceBefore':2,
-              'leading':16 }
-        self.toc.levelStyles = [
-            PS(d),
-            #PS(fontName='Times-Bold', fontSize=14, name='TOCHeading1',
-            #    leftIndent=20, firstLineIndent=-20, spaceBefore=2, leading=16),
-            PS(fontSize=10, name='TOCHeading2', leftIndent=40,
-                firstLineIndent=-20, spaceBefore=0, leading=8),
-        ]
 
     def afterFlowable(self, flowable):
         """Registers TOC entries."""
         if flowable.__class__.__name__ == 'Paragraph':
             text = flowable.getPlainText()
             style = flowable.style.name
-            if style in ["heading1", "centered_index"]:
+            if style in ["heading1", "centered_index", "heading1_invisible"]:
                 level = 0
-            elif style in ["heading2", "heading2_centered",
-                           "heading2_invisible"]:
+            elif style in ["heading2", "heading2_centered", "heading2_invisible"]:
                 level = 1
             else:
                 return

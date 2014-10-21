@@ -27,7 +27,7 @@ import multiprocessing
 import os
 import re
 import resource
-#import shutil
+import shutil
 import sys
 import tempfile
 
@@ -35,6 +35,7 @@ from reportlab.platypus.paragraph import Paragraph
 from reportlab.platypus import PageBreak, Image, Spacer, Table
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.units import inch
+import reportlab.lib.colors
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -79,6 +80,10 @@ def ellipsize(text, limit=100):
     if len(ret) > limit - 3:
         ret = ret + '...'
     return ret
+
+def date_string(dt):
+    '''Prints a datetime string in format '2014-10-21 23:24:10' '''
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 def progress_callback(graph_added):
     if graph_added:
@@ -235,7 +240,7 @@ class PcpStats(object):
             # We expanded all the metrics here. We cannot do the same for indoms as those
             # are not yet available. We just pass the regexes and do it at custom
             # graph creation time
-            self.custom_graphs.append(("custom.%s" % label, metrics, indomres))
+            self.custom_graphs.append(("Custom.%s" % label, metrics, indomres))
 
         try: # Not all matplotlib versions have this key
             matplotlib.rcParams['figure.max_open_warning'] = 100
@@ -662,26 +667,32 @@ class PcpStats(object):
         self.rate_converted = self.parse()
         print()
         doc = PcpDocTemplate(output_file, self.configparser, pagesize=landscape(A4))
+        width = doc.pagesize[0]
         hostname = self.pcparchive.get_hostname()
-        self._do_heading('%s' % hostname, doc.fonts["centered_index"])
-        self.story.append(Spacer(1, 0.10 * inch))
+        self._do_heading('Report', doc.fonts["heading1_invisible"])
+        self.story.append(Paragraph('%s' % hostname, doc.fonts["front_title"]))
+        self.story.append(Spacer(1, 1.5 * inch))
         self.story.append(Image('pcplogo.png'))
-        #self.story.append(Paragraph('%s' % hostname, doc.fonts["centered"]))
-        self.story.append(Spacer(1, 0.10 * inch))
-        self.story.append(Paragraph('PCP Archives: %s' % (" ".join(self.args)),
-                          doc.fonts["mono"]))
+        self.story.append(Spacer(1, 0.5 * inch))
 
-        self.story.append(Paragraph('Start: %s - End: %s' %
-            (datetime.fromtimestamp(self.pcparchive.start),
-            datetime.fromtimestamp(self.pcparchive.end)), doc.fonts["mono"]))
-        self.story.append(Paragraph('Interval: %s seconds' %
-            (self.pcparchive.interval), doc.fonts["mono"]))
-        self.story.append(Spacer(1, 0.10 * inch))
+        data = [['PCP Archive', '%s' % (" ".join(self.args))],
+                ['Start', '%s' % date_string(datetime.fromtimestamp(self.pcparchive.start))],
+                ['End', '%s' % date_string(datetime.fromtimestamp(self.pcparchive.end))],
+                ['Interval', '%s seconds' % self.pcparchive.interval],
+                ['Created', '%s' % date_string(datetime.now())]]
+        style = [
+            ('GRID', (0, 0), (-1, -1), 1, reportlab.lib.colors.black),
+            ('ALIGN', (0, 0), (-1, -1), "LEFT"),
+            ('FONTSIZE', (0, 0), (-1, -1), 14),
+            ('FONTNAME', (0, 0), (-1, -1), "Helvetica"),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('INNERGRID', (0, 0), (-1, -1), 0.44, reportlab.lib.colors.black),
+            ]
+        table = Table(data, 2*[3.5*inch], 5*[0.4*inch]) 
+        table.setStyle(style)
+        self.story.append(table)
 
-        #self._do_heading('Table of contents', doc.fonts["centered_index"])
-        #self.story.append(doc.toc)
         self.story.append(PageBreak())
-
         (self.all_graphs, string_metrics) = self.get_all_graphs()
         done_metrics = []
         # This list contains the metrics that contained data
@@ -714,14 +725,14 @@ class PcpStats(object):
                 for (ts, v) in zip(timestamps, values):
                     if last_value != v:
                         text = ellipsize(v)
+                        ts = date_string(ts)
                         data.append((metric, '%s' % ts, text))
                         last_value = v
 
         if len(data) > 1:
             self._do_heading('String Metrics', doc.fonts["heading1"])
             self.story.append(Spacer(1, 0.2 * inch))
-            width = doc.pagesize[0]
-            table = Table(data, colWidths=(0.15 * width, 0.2 * width, 0.6 * width))
+            table = Table(data, colWidths=(0.17 * width, 0.12 * width, 0.56 * width))
             table.setStyle(doc.tablestyle)
             self.story.append(table)
             self.story.append(PageBreak())
@@ -749,8 +760,7 @@ class PcpStats(object):
         doc.multiBuild(self.story)
         print()
         print("Done building: {0}".format(output_file))
-        #FIXME
-        #shutil.rmtree(self.tempdir)
+        shutil.rmtree(self.tempdir)
         print("Done removing: {0}".format(self.tempdir))
 
     def print_info(self):
