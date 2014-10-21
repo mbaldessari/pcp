@@ -665,7 +665,12 @@ class PcpStats(object):
         sys.stdout.write('Parsing archive: ')
         sys.stdout.flush()
         self.rate_converted = self.parse()
+        (self.all_graphs, string_metrics) = self.get_all_graphs()
         print()
+        if len(self.all_graphs) == 0:
+            print('No usable non-zero graphs found.')
+            sys.exit(0)
+
         doc = PcpDocTemplate(output_file, self.configparser, pagesize=landscape(A4))
         width = doc.pagesize[0]
         hostname = self.pcparchive.get_hostname()
@@ -693,7 +698,6 @@ class PcpStats(object):
         self.story.append(table)
 
         self.story.append(PageBreak())
-        (self.all_graphs, string_metrics) = self.get_all_graphs()
         done_metrics = []
         # This list contains the metrics that contained data
         print('Creating graphs: ', end='')
