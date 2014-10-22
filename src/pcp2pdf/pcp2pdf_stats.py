@@ -73,12 +73,16 @@ X_AXIS = ('Time', 12, '%m-%d %H:%M', 20)
 # of the page
 LEGEND_THRESHOLD = 50
 
-
-def ellipsize(text, limit=100):
+def ellipsize(text, limit=20):
     '''Truncates a string in a nice-formatted way'''
-    ret = text[:limit].rsplit(' ', 1)[0]
-    if len(ret) > limit - 3:
-        ret = ret + '...'
+    if len(text) < limit:
+        return text
+
+    limit = limit - 2 # '..'
+    a = int(limit / 2)
+    b = int(limit / 2 + (limit % 2))
+
+    ret = text[:a] + '..' + text[len(text) - b:]
     return ret
 
 def date_string(dt):
@@ -543,6 +547,7 @@ class PcpStats(object):
                     else:
                         lbl = indom
 
+                lbl = ellipsize(lbl)
                 found = True
                 try:
                     axes.plot(timestamps, dataset, 'o:', label=lbl,
@@ -728,7 +733,7 @@ class PcpStats(object):
                 values = self.all_data[metric][indom][1]
                 for (ts, v) in zip(timestamps, values):
                     if last_value != v:
-                        text = ellipsize(v)
+                        text = ellipsize(v, 60)
                         ts = date_string(ts)
                         data.append((metric, '%s' % ts, text))
                         last_value = v
