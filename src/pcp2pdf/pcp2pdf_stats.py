@@ -58,11 +58,6 @@ if USE_MELIAE:
     from meliae import scanner, loader
     import objgraph
 
-# DPI used to create matplotimages. It's fairly high
-# in order for the graph to be crisp and clear
-# The higher, the more RAM is needed when creating
-# the pdf
-DPI = 200
 # FIXME: these two need to be moved to pcp2pdf_style
 # Inch graph size (width, height)
 GRAPH_SIZE = (10.5, 6.5)
@@ -140,6 +135,8 @@ class PcpStats(object):
         self.labels = opts.labels
         self.threaded = opts.threaded
         self.configparser = opts.configparser
+        self.DPI = self.configparser.getint('main', 'dpi')
+
         # Using /var/tmp as /tmp is ram-mounted these days
         self.tempdir = tempfile.mkdtemp(prefix='pcpstats', dir='/var/tmp')
         # This will contain all the metrics found in the archive file
@@ -547,7 +544,7 @@ class PcpStats(object):
                     else:
                         lbl = indom
 
-                lbl = ellipsize(lbl)
+                lbl = ellipsize(lbl, 30)
                 found = True
                 try:
                     axes.plot(timestamps, dataset, 'o:', label=lbl,
@@ -600,9 +597,9 @@ class PcpStats(object):
                 lgd = axes.legend(loc=1, ncol=int(indoms**0.5), shadow=True, prop=fontproperties)
 
         if lgd:
-            plt.savefig(fname, bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=DPI)
+            plt.savefig(fname, bbox_extra_artists=(lgd,), bbox_inches='tight', dpi=self.DPI)
         else:
-            plt.savefig(fname, bbox_inches='tight', dpi=DPI)
+            plt.savefig(fname, bbox_inches='tight', dpi=self.DPI)
         plt.cla()
         plt.clf()
         plt.close('all')
@@ -733,7 +730,7 @@ class PcpStats(object):
                 values = self.all_data[metric][indom][1]
                 for (ts, v) in zip(timestamps, values):
                     if last_value != v:
-                        text = ellipsize(v, 60)
+                        text = ellipsize(v, 100)
                         ts = date_string(ts)
                         data.append((metric, '%s' % ts, text))
                         last_value = v

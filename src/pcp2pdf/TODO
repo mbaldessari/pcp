@@ -5,9 +5,6 @@
 
 - Document the config file in the manpage
 
-- Split all the style properties in some default rc file. Ship a default one in /etc/pcp/pcp2pdfstylerc
-  and let overrides happen in ~/.config/pcp2pdfstylerc
-
 - Add events support so that we have an automatic marker when an event is present
   in an archive
 
